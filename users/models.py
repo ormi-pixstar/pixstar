@@ -21,8 +21,11 @@ class UserManager(BaseUserManager):
     def create_user(self, username, password, **extra_fields):
         return self._create_user(username, password, False, False, **extra_fields)
     
+    def create_staff(self, username, password, **extra_fields):
+        return self._create_user(username, password, True, False, **extra_fields)
+    
     def create_superuser(self, username, password, **extra_fields):
-        return self._create_superuser(username, password, True, True, **extra_fields)
+        return self._create_user(username, password, True, True, **extra_fields)
     
 class User(AbstractBaseUser):
     username = models.CharField(unique=True, max_length=50)
