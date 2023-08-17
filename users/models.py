@@ -12,6 +12,13 @@ class UserManager(BaseUserManager):
         now = timezone.localtime()
         email = self.normalize_email(email)
         user = self.model(
+            username = username,
+            is_staff = is_staff,
+            is_superuser = is_superuser,
+            is_active = True,
+            last_login = now,
+            date_joined = now,
+            **extra_fields
 
         )
         user.set_password(password)
@@ -34,3 +41,6 @@ class User(AbstractBaseUser):
     is_active = models.BooleanField(default=True)
     last_login = models.DateTimeField(null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
+
+    USERNAME_FIELD = 'usernamer'
+    REQUIRED_FIELDS = []
