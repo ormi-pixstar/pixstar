@@ -4,5 +4,5 @@ from . import views
 app_name = 'posts'
 
 urlpatterns = [
-    path("list/", views.PostSearchAPIView.as_view(), name='list'),
+    path("list/", views.PostListAPIView.as_view(), name='list'),
 ]
