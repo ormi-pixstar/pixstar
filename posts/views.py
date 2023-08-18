@@ -4,6 +4,7 @@ from rest_framework import status
 from .models import Post
 from .serializers import PostSerializer
 from django.db.models import Count
+from drf_spectacular.utils import extend_schema
 
 
 # 포스트 조회 및 검색
@@ -22,6 +23,7 @@ class PostList(APIView):
             return posts.order_by('-likes_count')
         return posts.order_by('-created_at')
 
+    @extend_schema(responses=PostSerializer)
     def get(self, request):
         # 쿼리 파라미터 가져오기
         search_query = request.query_params.get('search', None)
