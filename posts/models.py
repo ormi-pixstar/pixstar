@@ -11,7 +11,7 @@ class Post(models.Model):
 
 class Image(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='posts/images/')
+    image = models.ImageField(upload_to='posts/images/', null=False, blank=False)
 
 
 class Like(models.Model):
@@ -19,5 +19,6 @@ class Like(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # 유저와 포스트의 유일성을 강제 -> 에러 처리 필요
     class Meta:
         unique_together = ('user', 'post')
