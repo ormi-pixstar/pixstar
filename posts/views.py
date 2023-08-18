@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Post
 from .serializers import PostSerializer
+from django.db.models import Count
 
 
 # 포스트 조회 및 검색
-class PostListAPIView(APIView):
+class PostList(APIView):
     def get(self, request):
         # 쿼리 파라미터 가져오기
         search_query = request.query_params.get('search', None)
@@ -22,7 +23,7 @@ class PostListAPIView(APIView):
         if sort_order == 'desc':
             posts = posts.order_by('-created_at')
         elif sort_order == 'likes':
-            posts = posts.order_by('-likes')
+            posts = posts.annotate(likes_count=Count('like')).order_by('-likes_count')
 
         serializer = PostSerializer(posts, many=True)
 
