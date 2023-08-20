@@ -125,7 +125,7 @@ class Update(View):
         pass
 
 
-### update
+### tempClass
 class CheckFuntion(View):
     def get(self, request):
         context = {
