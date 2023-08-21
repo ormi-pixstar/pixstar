@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <p>Temp User Index</p>
+  <a href="{% url 'users:login' %}">로그인</a>
+  <a href="{% url 'users:logout' %}">로그아웃</a>
+  <a href="{% url 'users:signin' %}">회원가입</a>
+  <a href="{% url 'users:signout' %}">회원탈퇴</a>
+  <a href="{% url 'users:profile' %}">프로필조회</a>
+  <a href="{% url 'users:update' %}">프로필수정</a>
+{% endblock content %}
