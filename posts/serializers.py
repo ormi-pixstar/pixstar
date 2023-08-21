@@ -26,3 +26,11 @@ class PostSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Post
 #         fields = ["user", "like"]
+
+
+# class PostSerializer(serializers.ModelSerializer):
+#     likes_count = serializers.IntegerField(read_only=True, default=0)
+
+#     class Meta:
+#         model = Post
+#         fields = ('id', 'content', 'created_at', 'updated_at', 'writer', 'likes_count')

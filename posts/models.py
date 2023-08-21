@@ -5,7 +5,7 @@ User = get_user_model()
 
 # Create your models here.
 class Post(models.Model):
-    content = models.TextField()
+    content = models.TextField(max_length=140)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -20,3 +20,13 @@ class Image(models.Model):
 # class Like(models.Model):
 #     user = models.ForeignKey(User, on_delete=models.CASCADE)
 #     post = models.ForeignKey('Post', on_delete=models.CASCADE)
+
+
+# class Like(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     post = models.ForeignKey('Post', on_delete=models.CASCADE)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     # 유저와 포스트의 유일성을 강제 -> 에러 처리 필요
+#     class Meta:
+#         unique_together = ('user', 'post')
