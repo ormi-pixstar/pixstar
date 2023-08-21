@@ -1,13 +1,20 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework.parsers import FileUploadParser
 from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.response import Response
-from .models import *
-from .serializers import *
-from django.db.models import Count
+from django.shortcuts import get_object_or_404
+import boto3
+import os
 from drf_spectacular.utils import extend_schema
+from .models import Post, Image
+from .serializers import PostSerializer, ImageSerializer
+from django.db.models import Count
+from dotenv import load_dotenv
 
-# Create your views here.
+# 환경변수 로드
+load_dotenv()
+
+
 # 포스트 조회 및 검색
 class PostList(APIView):
     # 검색 쿼리 처리
@@ -48,8 +55,8 @@ class PostWrite(APIView):
         if serializer.is_valid():
             post = serializer.save(writer=request.user)
             post.save()
-            return Response(serializer.data, status = status.HTTP_201_CREATED)
-        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostDetail(APIView):
@@ -57,18 +64,18 @@ class PostDetail(APIView):
         post = get_object_or_404(Post, pk=pk)
         serializer = PostSerializer(post)
         if serializer.is_valid():
-            return Response(serializer.data, status = status.HTTP_200_OK)
-        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostEdit(APIView):
     def put(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(post, data = request.data)
+        serializer = PostSerializer(post, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status = status.HTTP_201_CREATED)
-        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostDelete(APIView):
@@ -77,11 +84,29 @@ class PostDelete(APIView):
         serializer = PostSerializer(post)
         if serializer.is_valid():
             post.delete()
-            return Response(serializer.data, status = status.HTTP_204_NO_CONTENT)
-        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class PostLike(APIView):
-#     def get(self, request, pk):
-#         post = get_object_or_404(Post, pk=pk)
-#         user = request.user
+class PostLike(APIView):
+    def get(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        user = request.user
+
+
+# 이미지 업로드 TEST용, 배포 시 삭제
+class ImageUploadView(APIView):
+    parser_classes = (FileUploadParser,)
+
+    @extend_schema(request={"file": {"type": "file"}}, responses={201: None})
+    def post(self, request, *args, **kwargs):
+        file_obj = request.FILES.get('file')
+
+        if not file_obj:
+            return Response({"error": "파일이 없습니다."}, status=400)
+
+        bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
+        s3 = boto3.client('s3')
+        s3.upload_fileobj(file_obj, bucket_name, file_obj.name)
+
+        return Response(status=201)
