@@ -20,3 +20,9 @@ class PostSerializer(serializers.ModelSerializer):
         for image_data in images_data.getlist('images'):
             Image.objects.create(post=post, image=image_data)
         return post
+    
+
+# class PostLikeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Post
+#         fields = ["user", "like"]
