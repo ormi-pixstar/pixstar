@@ -19,5 +19,4 @@ urlpatterns = [
     path('profile/', views.Profile.as_view(), name='profile'),
     # 회원정보 수정
     path('Update/', views.Update.as_view(), name='update'),
-    
 ]
