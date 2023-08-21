@@ -9,5 +9,6 @@ urlpatterns = [
     path("detail/<int:pk>/", views.PostDetail.as_view(), name='post-detail'),
     path("detail/<int:pk>/edit/", views.PostEdit.as_view(), name='post-edit'),
     path("detail/<int:pk>/delete/", views.PostDelete.as_view(), name='post-delete'),
-    path("detail/<int:pk>/like", views.PostLike.as_view(), name='post-like'),
+    path("detail/<int:pk>/like/", views.PostLike.as_view(), name='post-like'),
+    path("test/image/", views.ImageUploadTest.as_view()),
 ]

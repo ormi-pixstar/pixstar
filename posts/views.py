@@ -1,4 +1,4 @@
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -95,13 +95,13 @@ class PostLike(APIView):
 
 
 # 이미지 업로드 TEST용, 배포 시 삭제
-class ImageUploadView(APIView):
-    parser_classes = (FileUploadParser,)
+class ImageUploadTest(APIView):
+    parser_classes = (MultiPartParser,)
 
     @extend_schema(request={"file": {"type": "file"}}, responses={201: None})
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         file_obj = request.FILES.get('file')
-
+        # print(request.FILES)
         if not file_obj:
             return Response({"error": "파일이 없습니다."}, status=400)
 
