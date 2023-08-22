@@ -28,7 +28,7 @@ class PostList(APIView):
         if sort_order == 'asc':
             return posts.order_by('created_at')
         elif sort_order == 'likes':
-            return posts.order_by('-likes_count')
+            return posts.annotate(like_count=Count('like')).order_by('-like_count')
         return posts.order_by('-created_at')
 
     @extend_schema(responses=PostSerializer)
@@ -39,8 +39,7 @@ class PostList(APIView):
 
         # 검색어에 맞는 포스트 가져오기
         posts = self.search_posts(search_query)
-        # likes_count를 response에 언제나 포함
-        posts = posts.annotate(likes_count=Count('like'))
+
         # 조건에 맞춰서 정렬
         posts = self.order_posts(posts, sort_order)
 
