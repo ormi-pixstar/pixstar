@@ -20,8 +20,12 @@ class PostList(APIView):
     # 검색 쿼리 처리
     def search_posts(self, search_query):
         if search_query:
-            return Post.objects.filter(content__icontains=search_query)
-        return Post.objects.all()
+            if search_query[0] == '@':  # user 검색
+                username = search_query[1:]
+                return Post.objects.filter(writer__username__icontains=username)
+            else:  # 포스트 검색
+                return Post.objects.filter(content__icontains=search_query)
+        return Post.objects.all()  # 전체 조회
 
     # 정렬 쿼리 처리
     def order_posts(self, posts, sort_order):
