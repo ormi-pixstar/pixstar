@@ -5,7 +5,7 @@ from .models import Post, Image
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
-        fields = '__all__'
+        fields = ["image"]
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -13,7 +13,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = '__all__'
+        fields = ["images", "content", "writer", "like"]
 
     def create(self, validated_data):
         images_data = self.context['request'].FILES
@@ -23,7 +23,10 @@ class PostSerializer(serializers.ModelSerializer):
         return post
 
 
-# class PostLikeSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Post
-#         fields = ["user", "like"]
+class PostLikeSerializer(serializers.ModelSerializer):
+    like = serializers.StringRelatedField(many=True)
+    like_count = serializers.IntegerField(source='like.count')
+
+    class Meta:
+        model = Post
+        fields = ["like", "like_count"]

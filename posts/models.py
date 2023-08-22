@@ -9,7 +9,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
-    like = models.ManyToManyField(User, related_name='like_post', null=True, blank=True)
+    like = models.ManyToManyField(User, related_name='like_post', blank=True)
 
 
 class Image(models.Model):

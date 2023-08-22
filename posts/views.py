@@ -7,7 +7,7 @@ import boto3
 import os
 from drf_spectacular.utils import extend_schema
 from .models import Post, Image
-from .serializers import PostSerializer, ImageSerializer
+from .serializers import PostSerializer, ImageSerializer, PostLikeSerializer
 from django.db.models import Count
 from dotenv import load_dotenv
 
@@ -17,6 +17,7 @@ load_dotenv()
 
 # 포스트 조회 및 검색
 class PostList(APIView):
+
     # 검색 쿼리 처리
     def search_posts(self, search_query):
         if search_query:
@@ -91,7 +92,16 @@ class PostDelete(APIView):
 class PostLike(APIView):
     def get(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        user = request.user
+        serializer = PostLikeSerializer(post)
+        return Response(serializer.data, status = status.HTTP_200_OK)
+    
+    def put(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        if request.user in post.like.all():
+            post.like.remove(request.user)
+            return Response("unlike", status = status.HTTP_200_OK)
+        post.like.add(request.user)
+        return Response("like", status = status.HTTP_200_OK)
 
 
 # 이미지 업로드 TEST용, 배포 시 삭제
