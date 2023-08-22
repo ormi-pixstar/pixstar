@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 # 환경변수 로드
 load_dotenv()
 
+
 class Pagination(PageNumberPagination):
     page_size = 5  # 페이지당 보여줄 포스트 수
     page_size_query_param = 'page_size'  # 페이지 크기를 지정하는 쿼리 파라미터
@@ -68,7 +69,7 @@ class PostList(APIView):
             'previous': paginator.get_previous_link()
         }
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class PostWrite(APIView):
