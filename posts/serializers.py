@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Image
+from .models import *
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -10,7 +10,6 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     images = ImageSerializer(many=True)
-
     class Meta:
         model = Post
         fields = '__all__'
@@ -21,9 +20,17 @@ class PostSerializer(serializers.ModelSerializer):
         for image_data in images_data.getlist('images'):
             Image.objects.create(post=post, image=image_data)
         return post
-
+    
 
 # class PostLikeSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Post
 #         fields = ["user", "like"]
+
+
+# class PostSerializer(serializers.ModelSerializer):
+#     likes_count = serializers.IntegerField(read_only=True, default=0)
+
+#     class Meta:
+#         model = Post
+#         fields = ('id', 'content', 'created_at', 'updated_at', 'writer', 'likes_count')
