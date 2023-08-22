@@ -1,5 +1,6 @@
 from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -14,21 +15,32 @@ from dotenv import load_dotenv
 # 환경변수 로드
 load_dotenv()
 
+class Pagination(PageNumberPagination):
+    page_size = 5  # 페이지당 보여줄 포스트 수
+    page_size_query_param = 'page_size'  # 페이지 크기를 지정하는 쿼리 파라미터
+    max_page_size = 100  # 최대 페이지 크기
+
 
 # 포스트 조회 및 검색
 class PostList(APIView):
+    pagination_class = Pagination
+    
     # 검색 쿼리 처리
     def search_posts(self, search_query):
         if search_query:
-            return Post.objects.filter(content__icontains=search_query)
-        return Post.objects.all()
+            if search_query[0] == '@':  # user 검색
+                username = search_query[1:]
+                return Post.objects.filter(writer__username__icontains=username)
+            else:  # 포스트 검색
+                return Post.objects.filter(content__icontains=search_query)
+        return Post.objects.all()  # 전체 조회
 
     # 정렬 쿼리 처리
     def order_posts(self, posts, sort_order):
         if sort_order == 'asc':
             return posts.order_by('created_at')
         elif sort_order == 'likes':
-            return posts.order_by('-likes_count')
+            return posts.annotate(like_count=Count('like')).order_by('-like_count')
         return posts.order_by('-created_at')
 
     @extend_schema(responses=PostSerializer)
@@ -39,12 +51,22 @@ class PostList(APIView):
 
         # 검색어에 맞는 포스트 가져오기
         posts = self.search_posts(search_query)
-        # likes_count를 response에 언제나 포함
-        posts = posts.annotate(likes_count=Count('like'))
+
         # 조건에 맞춰서 정렬
         posts = self.order_posts(posts, sort_order)
+        
+        # 페이지 객체 생성 및 데이터 시리얼라이징
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(posts, request)
 
-        serializer = PostSerializer(posts, many=True)
+        serializer = PostSerializer(page, many=True)
+        
+        response_data = {
+            'results': serializer.data,
+            'count': paginator.page.paginator.count,
+            'next': paginator.get_next_link(),
+            'previous': paginator.get_previous_link()
+        }
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
