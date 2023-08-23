@@ -54,8 +54,6 @@ class PostWrite(APIView):
     def post(self, request):
         serializer = PostSerializer(context={"request": request}, data=request.data)
         if serializer.is_valid():
-            print(serializer)
-            print(request.data)
             post = serializer.save(writer=request.user)
             post.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
