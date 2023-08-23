@@ -9,17 +9,17 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    images = ImageSerializer(many=True)
+    images = ImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["images", "content", "writer", "like"]
+        fields = ["images", "content", "writer"]
 
     def create(self, validated_data):
         images_data = self.context['request'].FILES
         post = Post.objects.create(**validated_data)
-        for image_data in images_data.getlist('images'):
-            Image.objects.create(post=post, image=image_data)
+        for image in images_data.getlist('image'):
+            Image.objects.create(post=post, image=image)
         return post
 
 
