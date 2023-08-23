@@ -56,7 +56,7 @@ class PostWrite(APIView):
         if serializer.is_valid():
             post = serializer.save(writer=request.user)
             post.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -89,15 +89,15 @@ class PostLike(APIView):
     def get(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
         serializer = PostLikeSerializer(post)
-        return Response(serializer.data, status = status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def put(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
         if request.user in post.like.all():
             post.like.remove(request.user)
-            return Response("unlike", status = status.HTTP_200_OK)
+            return Response("unlike", status=status.HTTP_200_OK)
         post.like.add(request.user)
-        return Response("like", status = status.HTTP_200_OK)
+        return Response("like", status=status.HTTP_200_OK)
 
 
 # 이미지 업로드 TEST용, 배포 시 삭제
