@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <p>{{ user.username }}님의 회원정보는</p>
+  <ul>
+    <li>
+      <p>가입일 : {{ user.date_joined }}</p>
+    </li>
+    <li>
+      <p>마지막 접속일 : {{ user.last_login }}</p>
+    </li>
+    <li>
+      <p>이메일 : {{ user.email }}</p>
+    </li>
+  </ul>
+{% endblock content %}
