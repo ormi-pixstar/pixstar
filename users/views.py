@@ -18,7 +18,7 @@ from .serializers import *
 # Create your views here.
 
 ### 회원가입
-class SigninAPI(GenericAPIView):
+class Signin(GenericAPIView):
     
     queryset = User.objects.all()
     serializer_class = SigninSerializer
@@ -35,7 +35,7 @@ class SigninAPI(GenericAPIView):
 
 
 ### 회원탈퇴
-class SignoutAPI(GenericAPIView):
+class Signout(GenericAPIView):
 
     queryset = User.objects.all()
     serializer_class = SignoutSerializer
@@ -56,7 +56,7 @@ class SignoutAPI(GenericAPIView):
 
 
 ### 로그인
-class LoginAPI(GenericAPIView):
+class Login(GenericAPIView):
     
     queryset = User.objects.all()
     serializer_class = LoginSerializer
@@ -82,7 +82,7 @@ class LoginAPI(GenericAPIView):
 
 
 ### 로그아웃
-class LogoutAPI(GenericAPIView):
+class Logout(GenericAPIView):
     def get(self, request):
         pass
     def post(self, request):
@@ -91,7 +91,7 @@ class LogoutAPI(GenericAPIView):
 
 
 ### 회원조회
-class UserDetailAPI(GenericAPIView):
+class UserDetail(GenericAPIView):
 
     queryset = User.objects.all()
     serializer_class = ProfileSerializer
@@ -113,7 +113,7 @@ class UserDetailAPI(GenericAPIView):
 
 
 ### 회원수정
-class UserUpdateAPI(GenericAPIView):
+class UserUpdate(GenericAPIView):
     def get(self, request):
         pass
     def post(self, request):

@@ -5,15 +5,15 @@ app_name = 'users'
 
 urlpatterns = [
     # 회원가입
-    path('signinAPI/', views.SigninAPI.as_view(), name='SigninAPI'),
+    path('signin/', views.Signin.as_view(), name='Signin'),
     # 회원탈퇴
-    path('sginoutAPI', views.SignoutAPI.as_view(), name='signoutAPI'),
+    path('sginout/', views.Signout.as_view(), name='signout'),
     # 로그인
-    path('loginAPI/', views.LoginAPI.as_view(), name='LoginAPI'),
+    path('login/', views.Login.as_view(), name='Login'),
     # 로그아웃
-    path('logoutAPI/', views.LogoutAPI.as_view(), name='LogoutAPI'),
+    path('logout/', views.Logout.as_view(), name='Logout'),
     # 회원정보 조회
-    path('detailAPI/', views.UserDetailAPI.as_view(), name='UserDetailAPI'),
+    path('profile/', views.UserDetail.as_view(), name='UserDetail'),
     # 회원정보 수정
-    path('updateAPI/', views.UserUpdateAPI.as_view(), name='updateAPI'),
+    path('update/', views.UserUpdate.as_view(), name='update'),
 ]
