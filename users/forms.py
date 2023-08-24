@@ -5,12 +5,13 @@ User = get_user_model()
 
 class SigninForm(UserCreationForm):
 
+
     class Meta:
         model = User
-        fields = [ 'username']
+        fields = [ 'email', 'username' ]
 
 class LoginForm(AuthenticationForm):
     
     class Meta:
         medel = User
-        fields = [ 'username', 'password' ]
+        fields = [ 'email', 'password' ]
