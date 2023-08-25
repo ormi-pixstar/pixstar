@@ -4,13 +4,14 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class SigninForm(UserCreationForm):
-
+    
     class Meta:
         model = User
-        fields = [ 'username']
+        fields = [ 'name', 'email' ]
 
+        
 class LoginForm(AuthenticationForm):
     
     class Meta:
-        medel = User
-        fields = [ 'username', 'password' ]
+        model = User
+        fields = [ 'name' ]
