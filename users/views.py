@@ -7,7 +7,6 @@ from django.contrib.auth import authenticate, login, logout
 # DjangoRestFramework
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 # Custom
@@ -18,13 +17,7 @@ from .serializers import *
 # Create your views here.
 
 ### 회원가입
-class Signin(GenericAPIView):
-    
-    queryset = User.objects.all()
-    serializer_class = SigninSerializer
-
-    def get(self, request):
-        pass
+class Signin(APIView):
     def post(self, request):
         serializer = SigninSerializer(data = request.data)
         if serializer.is_valid():
@@ -35,13 +28,7 @@ class Signin(GenericAPIView):
 
 
 ### 회원탈퇴
-class Signout(GenericAPIView):
-
-    queryset = User.objects.all()
-    serializer_class = SignoutSerializer
-
-    def get(self, request):
-        pass
+class Signout(APIView):
     def post(self, request):
         user = request.user
 
@@ -56,13 +43,7 @@ class Signout(GenericAPIView):
 
 
 ### 로그인
-class Login(GenericAPIView):
-    
-    queryset = User.objects.all()
-    serializer_class = LoginSerializer
-
-    def get(self, request):
-        pass
+class Login(APIView):
     def post(self, request):
         serializer = LoginSerializer(data = request.data)
 
@@ -82,7 +63,7 @@ class Login(GenericAPIView):
 
 
 ### 로그아웃
-class Logout(GenericAPIView):
+class Logout(APIView):
     def get(self, request):
         pass
     def post(self, request):
@@ -91,10 +72,7 @@ class Logout(GenericAPIView):
 
 
 ### 회원조회
-class UserDetail(GenericAPIView):
-
-    queryset = User.objects.all()
-    serializer_class = ProfileSerializer
+class UserDetail(APIView):
 
     def get(self, request):
         user = request.user
@@ -113,7 +91,7 @@ class UserDetail(GenericAPIView):
 
 
 ### 회원수정
-class UserUpdate(GenericAPIView):
+class UserUpdate(APIView):
     def get(self, request):
         pass
     def post(self, request):
