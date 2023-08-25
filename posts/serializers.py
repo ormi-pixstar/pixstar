@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Image
+from .models import Post, Image, Comment
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -44,3 +44,14 @@ class PostLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ["like", "like_count"]
+
+
+class CommentSerializer(serializers.ModelSerializer) :    
+    class Meta :
+        model = Comment
+        fields ='__all__'
+    
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ("comments",)
