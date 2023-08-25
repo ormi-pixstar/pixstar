@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from users.models import User
 
 
 class Post(models.Model):
@@ -34,4 +33,4 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.comments
+        return self.content
