@@ -70,7 +70,7 @@ class PostDetail(APIView):
 class PostEdit(APIView):
     def put(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(post, data=request.data)
+        serializer = PostSerializer(post, context={"request": request}, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -80,7 +80,6 @@ class PostEdit(APIView):
 class PostDelete(APIView):
     def delete(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(post)
         post.delete()
         return Response(status.HTTP_204_NO_CONTENT)
 

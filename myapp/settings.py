@@ -19,14 +19,14 @@ LOGIN_URL = '/users/login'
 # Django secret key
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-# # AWS S3 storage
-# AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-# AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-# AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-# AWS_REGION = 'ap-northeast-2'
-# AWS_DEFAULT_ACL = 'public-read'
-# # 미디어 파일의 기본 저장소를 S3로 설정
-# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# AWS S3 storage
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_REGION = 'ap-northeast-2'
+AWS_DEFAULT_ACL = 'public-read'
+# 미디어 파일의 기본 저장소를 S3로 설정
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!

@@ -21,7 +21,21 @@ class PostSerializer(serializers.ModelSerializer):
         for image in images_data.getlist('images'):
             Image.objects.create(post=post, image=image)
         return post
+    
+    def update(self, instance, validated_data):
+        instance.content = validated_data.get('content', instance.content)
+        images_data = self.context['request'].FILES
+        
+        if 'images' not in images_data:
+            images_data = None
 
+        if images_data is not None:
+            images = Image.objects.filter(post=instance)
+            images.delete()
+            for image_data in images_data.getlist('images'):
+                Image.objects.create(post=instance, image=image_data)
+        instance.save()
+        return instance
 
 class PostLikeSerializer(serializers.ModelSerializer):
     like = serializers.StringRelatedField(many=True)
