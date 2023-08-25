@@ -5,9 +5,14 @@ from django.views import View
 from django.contrib.auth import authenticate, login, logout
 
 # DjangoRestFramework
-from rest_framework import status
+from rest_framework import status, exceptions
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+
+#DjangroRestFramework-simpleJWT
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Custom
 from .models import *
@@ -49,13 +54,21 @@ class Login(APIView):
 
         if serializer.is_valid():
             user = serializer.validated_data.get('user')
+            token = TokenObtainPairSerializer.get_token(user)
+            refresh_token = str(token)
+            access_token = str(token.access_token)
+
+            user = serializer.validated_data.get('user')
             response = Response(
                 {
                     "user" : { "id" : user.pk, "name" : user.name },
-                    "message" : "로그인 완료"
+                    "message" : "로그인 완료",
+                    "access_token": access_token,
                 },
                 status = status.HTTP_200_OK
             )
+            
+            response.set_cookie("refresh", refresh_token, httponly=True, samesite='None', secure=True)
             return response
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -64,10 +77,16 @@ class Login(APIView):
 
 ### 로그아웃
 class Logout(APIView):
-    def get(self, request):
-        pass
     def post(self, request):
-        pass
+        refresh_token = request.COOKIES.get('refresh')
+        if refresh_token:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        else:
+            return Response('비정상적인 토큰입니다.', status=status.HTTP_400_BAD_REQUEST)
+        response = Response('로그아웃 완료')
+        response.set_cookie('refresh', httponly=True, samesite='None', secure=True)
+        return response
 
 
 
