@@ -1,136 +1,98 @@
+# Django
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django.contrib.auth import authenticate, login, logout
-from rest_framework.views import APIView
-from rest_framework.response import responses
+
+# DjangoRestFramework
 from rest_framework import status
-from .models import Profile
-from .forms import SigninForm, LoginForm
-from .serializers import ProfileSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+# Custom
+from .models import *
+from .forms import *
+from .serializers import *
 
 # Create your views here.
 
-class Index(View):
-    def get(self, request):
-        context = {
-            "title" : "UserIndex"
-        }
-        return render(request, 'users/index.html', context)
-
-### Signin
-class Signin(View):
-    def get(self, request):
-        if request.user.is_authenticated:
-            return redirect('users:logincheck')
-        form = SigninForm()
-        context = {
-            "form" : form,
-            "title" : "UserSignin"
-        }
-        return render(request, 'users/signin.html', context)
+### 회원가입
+class Signin(APIView):
     def post(self, request):
-        form = SigninForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            return redirect('users:login')
-        context = {
-            'form' : form
-        }
-        return render(request, 'users/signin.html', context)
+        serializer = SigninSerializer(data = request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response("회원가입에 성공했습니다.", status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+### 회원탈퇴
+class Signout(APIView):
+    def post(self, request):
+        user = request.user
+
+        serializer = SignoutSerializer(data=request.data, context={"user":user})
+        if serializer.is_valid():
+            user.is_active = False
+            user.save()
+            return Response("회원탈퇴되었습니다.")
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+### 로그인
+class Login(APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data = request.data)
+
+        if serializer.is_valid():
+            user = serializer.validated_data.get('user')
+            response = Response(
+                {
+                    "user" : { "id" : user.pk, "name" : user.name },
+                    "message" : "로그인 완료"
+                },
+                status = status.HTTP_200_OK
+            )
+            return response
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
-### Signout
-class Signout(View):
+### 로그아웃
+class Logout(APIView):
     def get(self, request):
-        context = {
-            "title" : "UserSignout"
-        }
-        return render(request, 'users/signout.html', context)
+        pass
     def post(self, request):
         pass
 
 
 
-### Login
-class Login(View):
+### 회원조회
+class UserDetail(APIView):
+
     def get(self, request):
-        if request.user.is_authenticated:
-            return redirect('users:logincheck')
-        
-        form = LoginForm()
-        context = {
-            "form" : form,
-            "title" : "UserLogin"
-        }
-        return render(request, 'users/login.html', context)
+        user = request.user
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data)
     
     def post(self, request):
-        if request.user.is_authenticated:
-            return redirect('users:logincheck')
+        user = request.user
+        serializer = ProfileSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
         
-        form = LoginForm(request, request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(username=username, password=password)
-
-            if user:
-                login(request, user)
-                return redirect('users:logincheck')
-            
-        form.add_error(None, '아이디가 없습니다.')
-        
-        context = {
-            "form" : form
-        }
-        return render(request, 'users/login.html', context)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
-### Logout
-class Logout(View):
+### 회원수정
+class UserUpdate(APIView):
     def get(self, request):
-        logout(request)
-        return redirect('users:login')
-
-
-
-### profile
-class Profile(APIView):
-    # def get(self, request):
-    #     context = {
-    #         "title" : "UserProfile"
-    #     }
-    #     return render(request, 'users/profile.html', context)
-    def post(self, request):
-        user = request.data.get('user')
-
-        profile = Profile.objects.create(user=user)
-        serializer = ProfileSerializer(profile)
-
-        return responses(serializer.data, status=status.HTTP_201_CREATED)
-
-
-
-### update
-class Update(View):
-    def get(self, request):
-        context = {
-            "title" : "UserUpdate"
-        }
-        return render(request, 'users/update.html', context)
-    def post(self, request):
         pass
-
-
-### tempClass
-class CheckFuntion(View):
-    def get(self, request):
-        context = {
-            "title" : "FuntionCheck"
-        }
-        return render(request, 'users/logincheck.html', context)
     def post(self, request):
         pass
