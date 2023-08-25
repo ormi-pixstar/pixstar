@@ -70,6 +70,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+nohup.out
 
 # Translations
 *.mo
@@ -166,6 +167,9 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Swagger
+schema.yml
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

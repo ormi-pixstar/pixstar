@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <p>현재 로그인된 사용자는</p>
+  {{ user.username }}
+  <p>님 입니다</p>
+  <a href="{% url 'users:profile' %}">프로필조회</a>
+  
+  <a href="{% url 'users:logout' %}">로그아웃</a>
+{% endblock content %}
