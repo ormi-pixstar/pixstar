@@ -2,8 +2,14 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer, CommentCreateSerializer
+from django.shortcuts import get_object_or_404
+import boto3
+import os
+from drf_spectacular.utils import extend_schema
+from .models import Post, Image, Comment
+from .serializers import PostSerializer, ImageSerializer, PostLikeSerializer, CommentSerializer, CommentCreateSerializer
+from django.db.models import Count
+from dotenv import load_dotenv
 
 # 환경변수 로드
 load_dotenv()
