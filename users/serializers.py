@@ -41,10 +41,13 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['name', 'password']
+        extra_kwargs = {
+            'name': {'validators': []}, 
+        }
 
     def validate(self, data):
-        name = data.get('name')
-        password = data.get('pasword')
+        name = data.get("name")
+        password = data.get("password")
 
         if not name:
             raise serializers.ValidationError('아이디를 입력해주세요')

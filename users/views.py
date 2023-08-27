@@ -80,18 +80,24 @@ class Login(APIView):
 
 ### 로그아웃
 class Logout(APIView):
+    # def post(self, request):
+    #     refresh_token = request.COOKIES.get('refresh')
+    #     if refresh_token:
+    #         token = RefreshToken(refresh_token)
+    #         token.blacklist()
+    #     else:
+    #         return Response('비정상적인 토큰입니다.', status=status.HTTP_400_BAD_REQUEST)
+    #     response = Response('로그아웃 완료')
+    #     response.set_cookie('refresh', httponly=True, samesite='None', secure=True)
+    #     return response
+
     def post(self, request):
-        refresh_token = request.COOKIES.get('refresh')
-        if refresh_token:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-        else:
-            return Response('비정상적인 토큰입니다.', status=status.HTTP_400_BAD_REQUEST)
-        response = Response('로그아웃 완료')
-        response.set_cookie('refresh', httponly=True, samesite='None', secure=True)
+        response = Response({"message": "로그아웃"}, status=status.HTTP_202_ACCEPTED)
+        response.delete_cookie("access")
+        response.delete_cookie("refresh")
         return response
 
-
+      
 ### 회원조회
 class UserDetail(APIView):
     def get(self, request):
