@@ -97,6 +97,7 @@ class Logout(APIView):
         response.delete_cookie("refresh")
         return response
 
+      
 ### 회원조회
 class UserDetail(APIView):
     def get(self, request):

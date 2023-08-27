@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 AUTH_USER_MODEL = 'users.User'
 
-LOGIN_URL = '/users/login'
+LOGIN_URL = 'api/users/login/'
 
 
 # Quick-start development settings - unsuitable for production
@@ -32,7 +32,11 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'ormi-pixstar.github.io',
+]
 
 # CORS
 CORS_ORIGIN_WHITELIST = [
@@ -144,14 +148,11 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'static'
-
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / '/static'
 
 # 로컬에서 파일을 저장할 경로
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # Default primary key field type
