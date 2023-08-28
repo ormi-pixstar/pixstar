@@ -1,8 +1,11 @@
+from django.contrib.auth import authenticate
 from rest_framework import serializers
 from .models import User
 
 
-class UserSerializer(serializers.ModelSerializer):
+class SignupSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
     class Meta:
         model = User
         fields = ['email', 'password']
@@ -16,3 +19,14 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
+    def validate(self, data):
+        user = authenticate(email=data['email'], password=data['password'])
+        if user and user.is_active:
+            return user
+        raise serializers.ValidationError("Incorrect email or password.")

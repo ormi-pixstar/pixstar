@@ -3,7 +3,8 @@ from .models import Post, Image, Like, Comment
 import os
 import boto3
 import uuid
-from user.serializers import UserSerializer
+
+# from user.serializers import UserSerializer
 
 
 # 파일명이 중복되는 경우를 방지
@@ -55,7 +56,7 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class LikeSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    # user = UserSerializer(read_only=True)
 
     class Meta:
         model = Like
