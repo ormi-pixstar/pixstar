@@ -1,7 +1,15 @@
 from django.db import models
+import uuid
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+
+# 파일명이 중복되는 경우를 방지
+def unique_filename(instance, filename):
+    ext = filename.split('.')[-1]
+    new_filename = f"{uuid.uuid4()}.{ext}"
+    return f'images/{new_filename}'
 
 
 class Post(models.Model):
@@ -14,7 +22,7 @@ class Post(models.Model):
 
 class Image(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='', null=False, blank=False)
+    image = models.ImageField(upload_to=unique_filename, null=False, blank=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
