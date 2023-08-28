@@ -26,13 +26,12 @@ class Post(models.Model):
 
 
 class Image(models.Model):
-    post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to=unique_filename, null=False, blank=False)
+    post = models.ForeignKey('Post', related_name='images', on_delete=models.CASCADE)
+    image_url = models.URLField(max_length=500, null=False, blank=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.image.name
+        return self.image.image_url
 
 
 class Like(models.Model):
