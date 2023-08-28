@@ -8,9 +8,9 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'user.User'
 
-LOGIN_URL = 'api/users/login/'
+LOGIN_URL = 'api/user/login/'
 
 
 # Quick-start development settings - unsuitable for production
@@ -62,8 +62,8 @@ INSTALLED_APPS = [
     'storages',
     'corsheaders',
     # CustomApp
-    'users',
-    'posts',
+    'user',
+    'post',
 ]
 
 MIDDLEWARE = [

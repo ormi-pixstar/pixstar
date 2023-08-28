@@ -4,8 +4,8 @@ from django.conf import settings
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
-    path('api/users/', include('users.urls')),
-    path('api/posts/', include('posts.urls')),
+    path('api/user/', include('user.urls')),
+    path('api/post/', include('post.urls')),
     # Swagger
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path(

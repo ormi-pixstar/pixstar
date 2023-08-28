@@ -3,7 +3,7 @@ from .models import Post, Image, Like, Comment
 import os
 import boto3
 import uuid
-from users.serializers import UserSerializer
+from user.serializers import UserSerializer
 
 
 # 파일명이 중복되는 경우를 방지
