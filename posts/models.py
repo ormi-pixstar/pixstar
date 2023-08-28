@@ -20,10 +20,12 @@ class Image(models.Model):
 class Comment(models.Model):
     post = models.ForeignKey('Post', related_name='comments', on_delete=models.CASCADE)
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
-    # parent = models.ForeignKey('self', related_name='recomments', on_delete=models.CASCADE, null=True, blank=True)
-    comments = models.TextField()
+    content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies'
+    )
 
     def __str__(self):
-        return self.comments
+        return self.content
