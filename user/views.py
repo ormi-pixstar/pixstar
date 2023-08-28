@@ -1,12 +1,18 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth import get_user_model
-from .serializers import SignupSerializer, LoginSerializer, SignoutSerializer
+from .serializers import (
+    SignupSerializer,
+    LoginSerializer,
+    SignoutSerializer,
+    UserUpdateSerializer,
+)
 from post.serializers import UserPostSerializer
 
 User = get_user_model()
@@ -146,4 +152,31 @@ class ProfileView(APIView):
             )
         serializer = UserPostSerializer(user)
 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# 유저 정보 수정
+class UserUpdateView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        serializer = UserUpdateSerializer(data=request.data)
+
+        # 토큰 확인
+        if not user.is_authenticated:
+            return Response(
+                {'detail': 'User is not authenticated.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 비밀번호 확인
+        if not serializer.is_valid():
+            return Response(
+                {'detail': 'Incorrect password.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)

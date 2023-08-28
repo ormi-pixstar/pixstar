@@ -14,6 +14,6 @@ urlpatterns = [
     path('signout/', views.SignoutView.as_view(), name='signout'),
     # 유저 프로필
     path('profile/<int:user_id>/', views.ProfileView.as_view(), name='profile'),
-    # # 회원정보 수정
-    # path('update/', views.UserUpdate.as_view(), name='update'),
+    # 회원 정보 수정
+    path('update/', views.UserUpdateView.as_view(), name='user-update'),
 ]

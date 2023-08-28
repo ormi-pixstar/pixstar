@@ -46,3 +46,9 @@ class SignoutSerializer(serializers.Serializer):
         write_only=True,
         style={'input_type': 'password'},
     )
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['password', 'profile_img']
