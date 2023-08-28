@@ -5,9 +5,9 @@ User = get_user_model()
 
 
 class Post(models.Model):
-    content = models.TextField(max_length=140)
+    content = models.TextField()
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
-    like = models.ManyToManyField(User, related_name='like_post', blank=True)
+    images = models.ManyToManyField('Image')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -15,6 +15,17 @@ class Post(models.Model):
 class Image(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='', null=False, blank=False)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey('Post', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # 유저와 포스트의 유일성을 강제 -> 에러 처리 필요
+    class Meta:
+        unique_together = ('user', 'post')
 
 
 class Comment(models.Model):
@@ -26,6 +37,3 @@ class Comment(models.Model):
     parent = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies'
     )
-
-    def __str__(self):
-        return self.content
