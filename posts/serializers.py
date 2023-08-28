@@ -1,59 +1,77 @@
 from rest_framework import serializers
-from .models import Post, Image, Comment
+from .models import Post, Image, Like, Comment
+import os
+import boto3
+import uuid
+from users.serializers import UserSerializer
+
+
+# 파일명이 중복되는 경우를 방지
+def unique_filename(instance, filename):
+    ext = filename.split('.')[-1]
+    new_filename = f"{uuid.uuid4()}.{ext}"
+    return f'images/{new_filename}'
 
 
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
-        fields = ["image"]
+        fields = ['id', 'post', 'image_url']
+
+    def create(self, validated_data):
+        images = self.context['request'].FILES.getlist('images')
+
+        if not images or len(images) == 0:
+            raise serializers.ValidationError("이미지 파일을 확인할 수 없습니다.")
+
+        if len(images) > 10:
+            raise serializers.ValidationError("최대 10개의 이미지만 업로드 가능합니다.")
+
+        image_urls = []
+        for image in images:
+            try:
+                # S3에 이미지 업로드
+                s3 = boto3.client(
+                    's3',
+                    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                )
+                file_name = unique_filename(image.name)
+                bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
+                s3.upload_fileobj(
+                    image, bucket_name, file_name, ExtraArgs={'ACL': 'public-read'}
+                )
+                # S3 URL 생성
+                image_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
+                image_urls.append(image_url)
+            except Exception as e:
+                raise serializers.ValidationError(f"이미지 업로드 중 에러 발생: {str(e)}")
+
+        # DB에 이미지 URL 저장
+        for url in image_urls:
+            Image.objects.create(post=validated_data['post'], image_url=url)
+
+        return validated_data
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Like
+        fields = ['user', 'post']
 
 
 class PostSerializer(serializers.ModelSerializer):
     images = ImageSerializer(many=True, read_only=True)
+    likes = LikeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["images", "content", "writer", "created_at", "updated_at"]
-
-    def create(self, validated_data):
-        images_data = self.context['request'].FILES
-        post = Post.objects.create(**validated_data)
-        for image in images_data.getlist('images'):
-            Image.objects.create(post=post, image=image)
-        return post
-
-    def update(self, instance, validated_data):
-        instance.content = validated_data.get('content', instance.content)
-        images_data = self.context['request'].FILES
-
-        if 'images' not in images_data:
-            images_data = None
-
-        if images_data is not None:
-            images = Image.objects.filter(post=instance)
-            images.delete()
-            for image_data in images_data.getlist('images'):
-                Image.objects.create(post=instance, image=image_data)
-        instance.save()
-        return instance
-
-
-class PostLikeSerializer(serializers.ModelSerializer):
-    like = serializers.StringRelatedField(many=True)
-    like_count = serializers.IntegerField(source='like.count')
-
-    class Meta:
-        model = Post
-        fields = ["like", "like_count"]
+        fields = ['images', 'likes', 'content', 'writer', 'created_at', 'updated_at']
 
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
-
-
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ("comments",)

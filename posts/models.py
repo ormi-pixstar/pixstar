@@ -1,15 +1,7 @@
 from django.db import models
-import uuid
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
-
-# 파일명이 중복되는 경우를 방지
-def unique_filename(instance, filename):
-    ext = filename.split('.')[-1]
-    new_filename = f"{uuid.uuid4()}.{ext}"
-    return f'images/{new_filename}'
 
 
 class Post(models.Model):
@@ -31,7 +23,7 @@ class Image(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.image.image_url
+        return self.image_url
 
 
 class Like(models.Model):
@@ -40,7 +32,7 @@ class Like(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} liked {self.post.content[:20]}"
+        return f"{self.user.email} liked {self.post.content[:20]}"
 
     # 유저와 포스트의 유일성을 강제 -> 에러 처리 필요
     class Meta:
