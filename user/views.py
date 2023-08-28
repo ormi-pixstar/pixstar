@@ -5,7 +5,11 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth import get_user_model
 from .serializers import SignupSerializer, LoginSerializer, SignoutSerializer
+from post.serializers import UserPostSerializer
+
+User = get_user_model()
 
 
 # 토큰 발급
@@ -129,3 +133,17 @@ class SignoutView(APIView):
             {'message': 'Successfully deleted account'},
             status=status.HTTP_200_OK,
         )
+
+
+# 유저 프로필 조회
+class ProfileView(APIView):
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = UserPostSerializer(user)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -12,8 +12,8 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name='logout'),
     # 회원탈퇴
     path('signout/', views.SignoutView.as_view(), name='signout'),
-    # # 회원정보 조회
-    # path('profile/', views.UserDetail.as_view(), name='UserDetail'),
+    # 유저 프로필
+    path('profile/<int:user_id>/', views.ProfileView.as_view(), name='profile'),
     # # 회원정보 수정
     # path('update/', views.UserUpdate.as_view(), name='update'),
 ]

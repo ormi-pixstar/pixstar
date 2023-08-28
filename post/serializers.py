@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from .models import Post, Image, Like, Comment
+from django.contrib.auth import get_user_model
 import os
 import boto3
 import uuid
 
-# from user.serializers import UserSerializer
+User = get_user_model()
 
 
 # 파일명이 중복되는 경우를 방지
@@ -56,8 +57,6 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class LikeSerializer(serializers.ModelSerializer):
-    # user = UserSerializer(read_only=True)
-
     class Meta:
         model = Like
         fields = ['user', 'post']
@@ -69,7 +68,28 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['images', 'likes', 'content', 'writer', 'created_at', 'updated_at']
+        fields = [
+            'images',
+            'likes',
+            'content',
+            'writer',
+            'created_at',
+            'updated_at',
+        ]
+
+
+class UserPostSerializer(serializers.ModelSerializer):
+    written_posts = PostSerializer(source='post_set', many=True, read_only=True)
+    liked_posts = LikeSerializer(source='like_set', many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'email',
+            'written_posts',
+            'liked_posts',
+        ]
 
 
 class CommentSerializer(serializers.ModelSerializer):
