@@ -4,13 +4,19 @@ from .models import User
 
 
 class SignupSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+    )
 
     class Meta:
         model = User
         fields = ['email', 'password']
         extra_kwargs = {
-            'password': {'write_only': True, 'style': {'input_type': 'password'}}
+            'password': {
+                'write_only': True,
+                'style': {'input_type': 'password'},
+            }
         }
 
     def create(self, validated_data):
@@ -23,10 +29,20 @@ class SignupSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+    )
 
     def validate(self, data):
         user = authenticate(email=data['email'], password=data['password'])
         if user and user.is_active:
             return user
         raise serializers.ValidationError("Incorrect email or password.")
+
+
+class SignoutSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+    )
