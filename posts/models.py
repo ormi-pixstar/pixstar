@@ -15,7 +15,6 @@ def unique_filename(instance, filename):
 class Post(models.Model):
     content = models.TextField()
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
-    images = models.ManyToManyField('Image')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
