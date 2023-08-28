@@ -12,4 +12,7 @@ urlpatterns = [
     path("detail/<int:pk>/like/", views.PostLike.as_view(), name='post-like'),
     # S3이미지 업로드 테스트용
     path("test/image/", views.ImageUploadTest.as_view()),
+    # 댓글
+    path('detail/<int:post_id>/comment/', views.CommentView.as_view(), name='comment_view'),
+    path('detail/<int:post_id>/comment/<int:comment_id>', views.CommentDetailView.as_view(), name='comment_detail_view'),
 ]
