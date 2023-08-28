@@ -21,11 +21,11 @@ class PostSerializer(serializers.ModelSerializer):
         for image in images_data.getlist('images'):
             Image.objects.create(post=post, image=image)
         return post
-    
+
     def update(self, instance, validated_data):
         instance.content = validated_data.get('content', instance.content)
         images_data = self.context['request'].FILES
-        
+
         if 'images' not in images_data:
             images_data = None
 
@@ -37,6 +37,7 @@ class PostSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
 class PostLikeSerializer(serializers.ModelSerializer):
     like = serializers.StringRelatedField(many=True)
     like_count = serializers.IntegerField(source='like.count')
@@ -46,11 +47,12 @@ class PostLikeSerializer(serializers.ModelSerializer):
         fields = ["like", "like_count"]
 
 
-class CommentSerializer(serializers.ModelSerializer) :    
-    class Meta :
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
         model = Comment
-        fields ='__all__'
-    
+        fields = '__all__'
+
+
 class CommentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment

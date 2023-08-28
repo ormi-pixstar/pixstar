@@ -5,7 +5,7 @@ app_name = 'users'
 
 urlpatterns = [
     # 회원가입
-    path('signin/', views.Signin.as_view(), name='Signin'),
+    path('signup/', views.Signup.as_view(), name='Signup'),
     # 회원탈퇴
     path('sginout/', views.Signout.as_view(), name='signout'),
     # 로그인

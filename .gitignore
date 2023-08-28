@@ -171,6 +171,9 @@ cython_debug/
 # Swagger
 schema.yml
 
+# 테스트용 tamplates
+**/templates/**/*.html
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
