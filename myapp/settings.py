@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'storages',
     'corsheaders',
+    'sslserver',
     # CustomApp
     'user',
     'post',
