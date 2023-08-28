@@ -19,17 +19,29 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.content[:20]
+
+    class Meta:
+        ordering = ['-created_at']
+
 
 class Image(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     image = models.ImageField(upload_to=unique_filename, null=False, blank=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.image.name
+
 
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} liked {self.post.content[:20]}"
 
     # 유저와 포스트의 유일성을 강제 -> 에러 처리 필요
     class Meta:
@@ -45,3 +57,9 @@ class Comment(models.Model):
     parent = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies'
     )
+
+    def __str__(self):
+        return self.content[:50]
+
+    class Meta:
+        ordering = ['-created_at']
