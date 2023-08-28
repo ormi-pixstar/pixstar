@@ -30,6 +30,7 @@ class Image(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     image = models.ImageField(upload_to=unique_filename, null=False, blank=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.image.name
@@ -59,7 +60,7 @@ class Comment(models.Model):
     )
 
     def __str__(self):
-        return self.content[:50]
+        return self.content[:20]
 
     class Meta:
         ordering = ['-created_at']
