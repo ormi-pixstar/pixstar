@@ -16,6 +16,9 @@ class Image(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='', null=False, blank=False)
 
+    def delete(self, *args, **kwargs):
+        self.file.delete(save=False)
+
 
 class Comment(models.Model):
     post = models.ForeignKey('Post', related_name='comments', on_delete=models.CASCADE)
