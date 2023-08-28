@@ -9,7 +9,7 @@ urlpatterns = [
     # 로그인
     path('login/', views.LoginView.as_view(), name='login'),
     # 로그아웃
-    # path('logout/', views.Logout.as_view(), name='Logout'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
     # 회원탈퇴
     # path('sginout/', views.Signout.as_view(), name='signout'),
     # # 회원정보 조회
