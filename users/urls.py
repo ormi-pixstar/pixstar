@@ -7,7 +7,7 @@ urlpatterns = [
     # 회원가입
     path('signup/', views.Signup.as_view(), name='Signup'),
     # 회원탈퇴
-    path('sginout/', views.Signout.as_view(), name='signout'),
+    path('signout/', views.Signout.as_view(), name='signout'),
     # 로그인
     path('login/', views.Login.as_view(), name='Login'),
     # 로그아웃

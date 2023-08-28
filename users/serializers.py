@@ -44,7 +44,7 @@ class LoginSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         name = data.get('name')
-        password = data.get('pasword')
+        password = data.get('password')
 
         if not name:
             raise serializers.ValidationError('아이디를 입력해주세요')
