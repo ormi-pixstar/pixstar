@@ -125,11 +125,17 @@ class SignoutView(APIView):
 
         # 토큰 확인
         if not user.is_authenticated:
-            raise AuthenticationFailed('User is not authenticated.')
+            return Response(
+                {'detail': 'User is not authenticated.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # 비밀번호 확인
         if not serializer.is_valid():
-            raise AuthenticationFailed('Incorrect password.')
+            return Response(
+                {'detail': 'Password is incorrect.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # 유저 비활성화(탈퇴)
         user.is_active = False

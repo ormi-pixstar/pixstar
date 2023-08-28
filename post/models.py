@@ -32,7 +32,7 @@ class Like(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.email} liked {self.post.content[:20]}"
+        return f'{self.user.email} liked {self.post.content[:20]}'
 
     # 유저와 포스트의 유일성을 강제 -> 에러 처리 필요
     class Meta:
@@ -40,13 +40,21 @@ class Like(models.Model):
 
 
 class Comment(models.Model):
-    post = models.ForeignKey('Post', related_name='comments', on_delete=models.CASCADE)
+    post = models.ForeignKey(
+        'Post',
+        related_name='comments',
+        on_delete=models.CASCADE,
+    )
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     parent = models.ForeignKey(
-        'self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies'
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='replies',
     )
 
     def __str__(self):

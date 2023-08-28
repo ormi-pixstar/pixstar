@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.response import Response
 from .models import User
 
 
@@ -38,7 +39,10 @@ class LoginSerializer(serializers.Serializer):
         user = authenticate(email=data['email'], password=data['password'])
         if user and user.is_active:
             return user
-        raise serializers.ValidationError("Incorrect email or password.")
+        return Response(
+            {'detail': 'Invalid credentials'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class SignoutSerializer(serializers.Serializer):

@@ -1,4 +1,6 @@
 from django.db import models
+from rest_framework import status
+from rest_framework.response import Response
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -10,7 +12,10 @@ from django.utils import timezone
 class UserManager(BaseUserManager):
     def _create_user(self, email, password, is_staff, is_superuser, **extra_fields):
         if not email:
-            raise ValueError('이메일은 필수입니다.')
+            return Response(
+                {'detail': 'Email is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         now = timezone.localtime()
         email = self.normalize_email(email)
         user = self.model(

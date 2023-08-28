@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.response import Response
+from rest_framework import status
 from .models import Post, Image, Like, Comment
 from django.contrib.auth import get_user_model
 import os
@@ -24,10 +26,16 @@ class ImageSerializer(serializers.ModelSerializer):
         images = self.context['request'].FILES.getlist('images')
 
         if not images or len(images) == 0:
-            raise serializers.ValidationError("이미지 파일을 확인할 수 없습니다.")
+            return Response(
+                {'detail': 'No files for upload.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if len(images) > 10:
-            raise serializers.ValidationError("최대 10개의 이미지만 업로드 가능합니다.")
+            return Response(
+                {'detail': 'Maximum 10 files allowed.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         image_urls = []
         for image in images:
@@ -47,7 +55,10 @@ class ImageSerializer(serializers.ModelSerializer):
                 image_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
                 image_urls.append(image_url)
             except Exception as e:
-                raise serializers.ValidationError(f"이미지 업로드 중 에러 발생: {str(e)}")
+                return Response(
+                    {'detail': f'Image upload failed: {e}'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         # DB에 이미지 URL 저장
         for url in image_urls:
