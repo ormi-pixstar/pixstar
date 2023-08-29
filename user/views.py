@@ -81,10 +81,6 @@ class LogoutView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # 토큰을 검증하고 블랙리스트에 추가
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-
             # 로그아웃 후 쿠키 삭제
             res = Response(
                 {'message': 'Successfully logged out'},

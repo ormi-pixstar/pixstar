@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from user.authentication import CookieJWTAuthentication
 from django.shortcuts import get_object_or_404
 import boto3
 import os
@@ -78,12 +80,26 @@ class PostList(APIView):
 
 
 class PostWrite(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+
     def post(self, request):
-        serializer = PostSerializer(context={"request": request}, data=request.data)
+        user = request.user
+
+        # 토큰 확인
+        if not user.is_authenticated:
+            return Response(
+                {'detail': 'User is not authenticated.'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        serializer = PostSerializer(data=request.data, context={"request": request})
+        print(serializer.context)
         if serializer.is_valid():
-            post = serializer.save(writer=request.user)
-            post.save()
-            return Response(status=status.HTTP_201_CREATED)
+            serializer.save(writer=request.user)
+            return Response(
+                {'message': 'Successfully created post'},
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

@@ -83,10 +83,15 @@ class PostSerializer(serializers.ModelSerializer):
             'images',
             'likes',
             'content',
-            'writer',
             'created_at',
             'updated_at',
         ]
+
+    def save(self, **kwargs):
+        writer = kwargs.get('writer', None)
+        if writer:
+            self.validated_data['writer'] = writer
+        return super(PostSerializer, self).save(**kwargs)
 
 
 class UserPostSerializer(serializers.ModelSerializer):
