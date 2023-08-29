@@ -1,10 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from .authentication import CookieJWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth import get_user_model
 from .serializers import (
     SignupSerializer,
@@ -35,19 +35,6 @@ class UserAuthenticationView(APIView):
         res.set_cookie('access', access_token, httponly=True, secure=True)
         res.set_cookie('refresh', refresh_token, httponly=True, secure=True)
         return res
-
-
-# 토큰 추출
-class CookieJWTAuthentication(JWTAuthentication):
-    def authenticate(self, request):
-        jwt_token = request.COOKIES.get('access')
-        if not jwt_token:
-            return None
-
-        # 임시로 Authorization 헤더를 설정
-        request.META['HTTP_AUTHORIZATION'] = f'Bearer {jwt_token}'
-
-        return super().authenticate(request)
 
 
 # 회원가입
@@ -167,7 +154,7 @@ class UserUpdateView(APIView):
 
     def put(self, request):
         user = request.user
-        serializer = UserUpdateSerializer(data=request.data)
+        serializer = UserUpdateSerializer(instance=user, data=request.data)
 
         # 토큰 확인
         if not user.is_authenticated:

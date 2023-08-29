@@ -165,7 +165,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     # simplejwt JWTAuthentication을 사용
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'user.authentication.CookieJWTAuthentication',
     ),
     # API 접근 권한 설정
     'DEFAULT_PERMISSION_CLASSES': (
