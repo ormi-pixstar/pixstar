@@ -113,7 +113,7 @@ class SignoutView(APIView):
         if not user.is_authenticated:
             return Response(
                 {'detail': 'User is not authenticated.'},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         # 비밀번호 확인
