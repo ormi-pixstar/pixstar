@@ -1,6 +1,5 @@
 from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
-from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -8,46 +7,34 @@ import boto3
 import os
 from drf_spectacular.utils import extend_schema
 from .models import Post, Image, Comment
-from .serializers import (
-    PostSerializer,
-    ImageSerializer,
-    PostLikeSerializer,
-    CommentSerializer,
-    CommentCreateSerializer,
-)
+from .serializers import PostSerializer, ImageSerializer, PostLikeSerializer, CommentSerializer, CommentCreateSerializer
 from django.db.models import Count
 from dotenv import load_dotenv
+from django.contrib.auth import get_user_model
+import jwt
+from myapp.settings import SECRET_KEY
+
+User = get_user_model()
 
 # 환경변수 로드
 load_dotenv()
 
 
-class Pagination(PageNumberPagination):
-    page_size = 5  # 페이지당 보여줄 포스트 수
-    page_size_query_param = 'page_size'  # 페이지 크기를 지정하는 쿼리 파라미터
-    max_page_size = 100  # 최대 페이지 크기
-
-
 # 포스트 조회 및 검색
 class PostList(APIView):
-    pagination_class = Pagination
 
     # 검색 쿼리 처리
     def search_posts(self, search_query):
         if search_query:
-            if search_query[0] == '@':  # user 검색
-                username = search_query[1:]
-                return Post.objects.filter(writer__username__icontains=username)
-            else:  # 포스트 검색
-                return Post.objects.filter(content__icontains=search_query)
-        return Post.objects.all()  # 전체 조회
+            return Post.objects.filter(content__icontains=search_query)
+        return Post.objects.all()
 
     # 정렬 쿼리 처리
     def order_posts(self, posts, sort_order):
         if sort_order == 'asc':
             return posts.order_by('created_at')
         elif sort_order == 'likes':
-            return posts.annotate(like_count=Count('like')).order_by('-like_count')
+            return posts.order_by('-likes_count')
         return posts.order_by('-created_at')
 
     @extend_schema(responses=PostSerializer)
@@ -58,31 +45,25 @@ class PostList(APIView):
 
         # 검색어에 맞는 포스트 가져오기
         posts = self.search_posts(search_query)
-
+        # likes_count를 response에 언제나 포함
+        posts = posts.annotate(likes_count=Count('like'))
         # 조건에 맞춰서 정렬
         posts = self.order_posts(posts, sort_order)
 
-        # 페이지 객체 생성 및 데이터 시리얼라이징
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(posts, request)
+        serializer = PostSerializer(posts, many=True)
 
-        serializer = PostSerializer(page, many=True)
-
-        response_data = {
-            'results': serializer.data,
-            'count': paginator.page.paginator.count,
-            'next': paginator.get_next_link(),
-            'previous': paginator.get_previous_link(),
-        }
-
-        return Response(response_data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PostWrite(APIView):
     def post(self, request):
         serializer = PostSerializer(context={"request": request}, data=request.data)
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
         if serializer.is_valid():
-            post = serializer.save(writer=request.user)
+            post = serializer.save(writer=user)
+            # post = serializer.save(writer=request.user)
             post.save()
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -91,16 +72,28 @@ class PostWrite(APIView):
 class PostDetail(APIView):
     def get(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(post)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer_post = PostSerializer(post).data
+        
+        comments = post.comment_set.all()
+        serialized_comments = CommentSerializer(comments, many=True).data
+
+        data = {
+            "post": serializer_post,
+            "comments": serialized_comments,
+        }
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+    # def get(self, request, pk):
+    #     post = get_object_or_404(Post, pk=pk)
+    #     serializer = PostSerializer(post)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PostEdit(APIView):
     def put(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(
-            post, context={"request": request}, data=request.data
-        )
+        serializer = PostSerializer(post, context={"request": request}, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -119,7 +112,7 @@ class PostLike(APIView):
         post = get_object_or_404(Post, pk=pk)
         serializer = PostLikeSerializer(post)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
     def put(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
         if request.user in post.like.all():
@@ -150,16 +143,20 @@ class ImageUploadTest(APIView):
 ## 댓글 작성, 조회
 class CommentView(APIView):
     def get(self, request, post_id):
-        post = Post.objects.get(id=post_id)
-        comments = post.comment_set.all()
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            post = Post.objects.get(id=post_id)
+            comments = post.comment_set.all()
+            serializer = CommentSerializer(comments, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, post_id):
         serializer = CommentCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(writer=request.writer, post_id=post_id)
-            return Response(serializer.data, status.HTTP_201_OK)
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
+        if serializer.is_valid():   
+            # comment = serializer.save(writer=request.user)
+            comment = serializer.save(writer=user, post_id=post_id)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -167,7 +164,11 @@ class CommentView(APIView):
 class CommentDetailView(APIView):
     def put(self, request, post_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
-        if request.user == comment.user:
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
+        # if request.user == comment.writer:
+        if user == comment.writer:
             serializer = CommentCreateSerializer(comment, data=request.data)
             if serializer.is_valid():
                 serializer.save()  # post에 user 정보 있기 때문에 (user=request.user) 생략
@@ -179,7 +180,11 @@ class CommentDetailView(APIView):
 
     def delete(self, request, post_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
-        if request.user == comment.user:
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
+        if user == comment.writer:
+        # if request.user == comment.writer:
             comment.delete()
             return Response("삭제되었습니다.", status=status.HTTP_204_NO_CONTENT)
         else:

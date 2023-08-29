@@ -21,7 +21,7 @@ class Image(models.Model):
 
 
 class Comment(models.Model):
-    post = models.ForeignKey('Post', related_name='comments', on_delete=models.CASCADE)
+    post = models.ForeignKey('Post', on_delete=models.CASCADE)
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
     # parent = models.ForeignKey('self', related_name='recomments', on_delete=models.CASCADE, null=True, blank=True)
     comments = models.TextField()
