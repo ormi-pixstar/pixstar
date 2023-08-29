@@ -30,7 +30,7 @@ class Pagination(PageNumberPagination):
 
 
 # 포스트 조회 및 검색
-class PostList(APIView):
+class PostListView(APIView):
     pagination_class = Pagination
 
     # 검색 쿼리 처리

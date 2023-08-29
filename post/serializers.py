@@ -80,18 +80,24 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'images',
-            'likes',
+            'id',
             'content',
             'created_at',
             'updated_at',
+            'images',
+            'likes',
         ]
 
-    def save(self, **kwargs):
-        writer = kwargs.get('writer', None)
+    def to_representation(self, instance):
+        representation = super(PostSerializer, self).to_representation(instance)
+        representation['writer'] = instance.writer.email
+        return representation
+
+    def create(self, validated_data):
+        writer = self.context.get('writer', None)
         if writer:
             self.validated_data['writer'] = writer
-        return super(PostSerializer, self).save(**kwargs)
+        return super(PostSerializer, self).create(validated_data)
 
 
 class UserPostSerializer(serializers.ModelSerializer):

@@ -4,9 +4,12 @@ from . import views
 app_name = 'post'
 
 urlpatterns = [
-    path("list/", views.PostList.as_view(), name='list'),
+    # 포스트 목록 조회
+    path("list/", views.PostListView.as_view(), name='post-list'),
+    # 포스트 작성
     path("write/", views.PostWrite.as_view(), name='post-write'),
-    # path("detail/<int:pk>/", views.PostDetail.as_view(), name='post-detail'),
+    # 포스트 상세 조회
+    path("detail/<int:pk>/", views.PostDetail.as_view(), name='post-detail'),
     # path("detail/<int:pk>/edit/", views.PostEdit.as_view(), name='post-edit'),
     # path("detail/<int:pk>/delete/", views.PostDelete.as_view(), name='post-delete'),
     # path("detail/<int:pk>/like/", views.PostLike.as_view(), name='post-like'),
