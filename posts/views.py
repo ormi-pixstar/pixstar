@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 from django.contrib.auth import get_user_model
 import jwt
 from myapp.settings import SECRET_KEY
+from .S3Storage import S3Storage
 
 User = get_user_model()
 
@@ -91,7 +92,6 @@ class PostWrite(APIView):
         user = get_object_or_404(User, pk=payload['user_id'])
         if serializer.is_valid():
             post = serializer.save(writer=user)
-            # post = serializer.save(writer=request.user)
             post.save()
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -112,15 +112,19 @@ class PostEdit(APIView):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostDelete(APIView):
     def delete(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
+        images = Image.objects.filter(post=post)
+        s = S3Storage()
+        for image in images:
+            s.delete(image)
         post.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PostLike(APIView):

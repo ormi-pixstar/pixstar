@@ -1,25 +1,27 @@
 from rest_framework import serializers
 from .models import Post, Image, Comment
-
+from .S3Storage import S3Storage
 
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
-        fields = ["image"]
+        fields = ["image_url"]
 
 
 class PostSerializer(serializers.ModelSerializer):
-    images = ImageSerializer(many=True, read_only=True)
+    image_urls = ImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["images", "content", "writer", "created_at", "updated_at"]
+        fields = ["image_urls", "content"]
 
     def create(self, validated_data):
-        images_data = self.context['request'].FILES
         post = Post.objects.create(**validated_data)
+        images_data = self.context['request'].FILES
+        s = S3Storage()
         for image in images_data.getlist('images'):
-            Image.objects.create(post=post, image=image)
+            s.upload(post.pk, image)
+            Image.objects.create(post=post, image_url=s.getUrl())
         return post
 
     def update(self, instance, validated_data):
@@ -30,10 +32,14 @@ class PostSerializer(serializers.ModelSerializer):
             images_data = None
 
         if images_data is not None:
+            s = S3Storage()
             images = Image.objects.filter(post=instance)
+            for image in images:
+                s.delete(image)
             images.delete()
             for image_data in images_data.getlist('images'):
-                Image.objects.create(post=instance, image=image_data)
+                s.upload(instance.pk, image_data)
+                Image.objects.create(post=instance, image_url=s.getUrl())
         instance.save()
         return instance
 
