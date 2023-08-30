@@ -17,6 +17,12 @@ from .serializers import (
 )
 from django.db.models import Count
 from dotenv import load_dotenv
+from django.contrib.auth import get_user_model
+import jwt
+from myapp.settings import SECRET_KEY
+from .S3Storage import S3Storage
+
+User = get_user_model()
 
 # 환경변수 로드
 load_dotenv()
@@ -81,8 +87,11 @@ class PostList(APIView):
 class PostWrite(APIView):
     def post(self, request):
         serializer = PostSerializer(context={"request": request}, data=request.data)
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
         if serializer.is_valid():
-            post = serializer.save(writer=request.user)
+            post = serializer.save(writer=user)
             post.save()
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -103,15 +112,19 @@ class PostEdit(APIView):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostDelete(APIView):
     def delete(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
+        images = Image.objects.filter(post=post)
+        s = S3Storage()
+        for image in images:
+            s.delete(image)
         post.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PostLike(APIView):
@@ -122,10 +135,13 @@ class PostLike(APIView):
 
     def put(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        if request.user in post.like.all():
-            post.like.remove(request.user)
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
+        if user in post.like.all():
+            post.like.remove(user)
             return Response("unlike", status=status.HTTP_200_OK)
-        post.like.add(request.user)
+        post.like.add(user)
         return Response("like", status=status.HTTP_200_OK)
 
 
@@ -156,9 +172,12 @@ class CommentView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, post_id):
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
         serializer = CommentCreateSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(writer=request.writer, post_id=post_id)
+            serializer.save(writer=user, post_id=post_id)
             return Response(serializer.data, status.HTTP_201_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -167,7 +186,10 @@ class CommentView(APIView):
 class CommentDetailView(APIView):
     def put(self, request, post_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
-        if request.user == comment.user:
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
+        if user == comment.user:
             serializer = CommentCreateSerializer(comment, data=request.data)
             if serializer.is_valid():
                 serializer.save()  # post에 user 정보 있기 때문에 (user=request.user) 생략
@@ -179,7 +201,10 @@ class CommentDetailView(APIView):
 
     def delete(self, request, post_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
-        if request.user == comment.user:
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
+        if user == comment.user:
             comment.delete()
             return Response("삭제되었습니다.", status=status.HTTP_204_NO_CONTENT)
         else:
