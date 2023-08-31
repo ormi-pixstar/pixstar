@@ -13,8 +13,8 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name='logout'),
     # 회원탈퇴
     path('signout/', views.SignoutView.as_view(), name='signout'),
-    # 유저 프로필
+    # 전체 프로필 조회
     path('profile/<int:user_id>/', views.ProfileView.as_view(), name='profile'),
-    # 회원 정보 수정
-    path('update/', views.UserUpdateView.as_view(), name='profile-update'),
+    # 유저 프로필 수정
+    path('profile/update/', views.ProfileUpdateView.as_view(), name='profile-update'),
 ]

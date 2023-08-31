@@ -56,8 +56,8 @@ class LoginSerializer(serializers.Serializer):
         raise serializers.ValidationError({'detail': '이메일, 비밀번호를 확인해 주세요.'})
 
 
-# 회원탈퇴
-class SignoutSerializer(serializers.Serializer):
+# 비밀번호 확인
+class PasswordCheckSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, required=True)
 
     def validate(self, data):
@@ -67,21 +67,48 @@ class SignoutSerializer(serializers.Serializer):
         return data
 
 
-### User 프로필 조회
+# 프로필 조회
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['name', 'email', 'last_login']
+        fields = ('email', 'username', 'profile_img')
 
 
-### User 프로필 수정
-class UserUpdateSerializer(serializers.ModelSerializer):
+# 프로필 수정
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    current_password = serializers.CharField(write_only=True, required=True)
+
     class Meta:
         model = User
-        fields = ['name', 'email', 'password']
+        fields = ('username', 'profile_img', 'password', 'current_password')
+        extra_kwargs = {
+            'username': {
+                'required': False,
+            },
+            'password': {
+                'write_only': True,
+                'required': False,
+                'validators': [validate_password],
+            },
+            'current_password': {
+                'write_only': True,
+                'required': True,
+            },
+        }
 
-        def validate(self, data):
-            email = data.get("email")
+    def validate(self, data):
+        user = self.context['request'].user
+        if not user.check_password(data['current_password']):
+            raise serializers.ValidationError({'password': '비밀번호가 올바르지 않습니다.'})
+        return data
 
-            user = self.context['user']
-            name = user.name
+    def update(self, instance, validated_data):
+        validated_data.pop('current_password', None)
+
+        for attr, value in validated_data.items():
+            # 새로운 데이터가 주어진 경우만 값을 업데이트하고, 그렇지 않으면 기존 값을 유지
+            new_value = value if value is not None else getattr(instance, attr)
+            setattr(instance, attr, new_value)
+
+        instance.save()
+        return instance

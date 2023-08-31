@@ -13,7 +13,6 @@ User = get_user_model()
 # 토큰 발급
 class UserAuthenticationView(APIView):
     def set_token_cookies(self, user):
-        print(self, user)
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
@@ -21,6 +20,10 @@ class UserAuthenticationView(APIView):
         res = Response(
             {
                 'message': self.message,
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                },
             },
             status=self.status_code,
         )
