@@ -7,7 +7,7 @@ import boto3
 import os
 from drf_spectacular.utils import extend_schema
 from .models import Post, Image, Comment
-from .serializers import PostSerializer, ImageSerializer, PostLikeSerializer, CommentSerializer, CommentCreateSerializer
+from .serializers import PostSerializer, ImageSerializer, PostLikeSerializer, CommentSerializer
 from django.db.models import Count
 from dotenv import load_dotenv
 from django.contrib.auth import get_user_model
@@ -74,7 +74,7 @@ class PostDetail(APIView):
         post = get_object_or_404(Post, pk=pk)
         serializer_post = PostSerializer(post).data
         
-        comments = post.comment_set.all()
+        comments = Comment.objects.filter(post=post)
         serialized_comments = CommentSerializer(comments, many=True).data
 
         data = {
@@ -140,36 +140,67 @@ class ImageUploadTest(APIView):
         return Response(status=201)
 
 
-## 댓글 작성, 조회
+# comment 조회, 작성
 class CommentView(APIView):
+
+    # comment 조회
     def get(self, request, post_id):
             post = Post.objects.get(id=post_id)
-            comments = post.comment_set.all()
+            # comments = post.comment_set.all()
+            comments = Comment.objects.filter(post_id=post_id)
             serializer = CommentSerializer(comments, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
+    # comment 작성
     def post(self, request, post_id):
-        serializer = CommentCreateSerializer(data=request.data)
+        # request.data는 사용자의 입력 데이터
+        serializer = CommentSerializer(data=request.data)
+
         access = request.COOKIES['access']
         payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
         user = get_object_or_404(User, pk=payload['user_id'])
-        if serializer.is_valid():   
-            # comment = serializer.save(writer=request.user)
-            comment = serializer.save(writer=user, post_id=post_id)
+
+        if serializer.is_valid():  # 유효성 검사
+            # comment = serializer.save(writer=request.user, post_id=post_id)
+            comments = serializer.save(writer=user, post_id=post_id)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-## 댓글 수정, 삭제
+# recomment 작성 및 comemnt의 수정, 삭제
 class CommentDetailView(APIView):
-    def put(self, request, post_id, comment_id):
-        comment = get_object_or_404(Comment, id=comment_id)
+    # recomment 작성
+    def post(self, request, post_id, comment_id):
+        # request.data는 사용자의 입력 데이터
+        serializer = CommentSerializer(data=request.data)
+
         access = request.COOKIES['access']
         payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
         user = get_object_or_404(User, pk=payload['user_id'])
-        # if request.user == comment.writer:
+
+        post = Post.objects.get(pk=post_id)
+        comment = Comment.objects.get(pk=comment_id)
+        if serializer.is_valid():  # 유효성 검사
+            # serializer.validated_data["writer"] = request.user
+            serializer.validated_data["writer"] = user
+            serializer.validated_data["parent"] = comment
+            serializer.validated_data["post"] = post
+            serializer.save()  # 저장
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # comment 수정
+    def put(self, request, post_id, comment_id, format=None):
+        comment = Comment.objects.get(
+            post_id=post_id, id=comment_id
+        )
+
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user = get_object_or_404(User, pk=payload['user_id'])
+
         if user == comment.writer:
-            serializer = CommentCreateSerializer(comment, data=request.data)
+            serializer = CommentSerializer(comment, data=request.data)
             if serializer.is_valid():
                 serializer.save()  # post에 user 정보 있기 때문에 (user=request.user) 생략
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -178,11 +209,16 @@ class CommentDetailView(APIView):
         else:
             return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
 
+    # comment 삭제    
     def delete(self, request, post_id, comment_id):
-        comment = get_object_or_404(Comment, id=comment_id)
+        comment = Comment.objects.get(
+            post_id=post_id, id=comment_id
+        )
+
         access = request.COOKIES['access']
         payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
         user = get_object_or_404(User, pk=payload['user_id'])
+
         if user == comment.writer:
         # if request.user == comment.writer:
             comment.delete()
