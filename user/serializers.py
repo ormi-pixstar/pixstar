@@ -40,7 +40,11 @@ class SignupSerializer(serializers.ModelSerializer):
 
 
 ### 로그인
-class LoginSerializer(serializers.Serializer):
+class LoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'password']
+
     email = serializers.EmailField()
     password = serializers.CharField(
         write_only=True,
@@ -62,13 +66,17 @@ class LoginSerializer(serializers.Serializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['password', 'profile_img']
+        fields = ['password', 'profile_img', 'nickname']
 
 
 
 ### 회원탈퇴
-class SignoutSerializer(serializers.Serializer):
-    password = serializers.CharField(
-        write_only=True,
-        style={'input_type': 'password'},
-    )
+class SignoutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['password']
+
+    # password = serializers.CharField(
+    #     write_only=True,
+    #     style={'input_type': 'password'},
+    # )
