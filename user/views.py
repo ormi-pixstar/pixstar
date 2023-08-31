@@ -21,7 +21,7 @@ from .serializers import (
 
 from .authentication import CookieJWTAuthentication
 
-# from post.serializers import UserPostSerializer
+# from posts.serializers import UserPostSerializer
 
 User = get_user_model()
 
