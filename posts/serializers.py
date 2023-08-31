@@ -8,12 +8,28 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = ["image_url"]
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    writer = serializers.ReadOnlyField(source="user.writer")
+    post = serializers.ReadOnlyField(source="post.pk")
+    reply = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ["post", "id", "writer", "parent", "comment", "created_at","updated_at", "reply"]
+
+    def get_reply(self, instance):
+        serializer = self.__class__(instance.reply, many=True)
+        serializer.bind("", self)
+        return serializer.data
+
+
 class PostSerializer(serializers.ModelSerializer):
     image_urls = ImageSerializer(many=True, read_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["image_urls", "content"]
+        fields = ["image_urls", "content", "comments"]
 
     def create(self, validated_data):
         post = Post.objects.create(**validated_data)
@@ -25,10 +41,10 @@ class PostSerializer(serializers.ModelSerializer):
         return post
 
     def update(self, instance, validated_data):
-        instance.content = validated_data.get('content', instance.content)
-        images_data = self.context['request'].FILES
+        instance.content = validated_data.get("content", instance.content)
+        images_data = self.context["request"].FILES
 
-        if 'images' not in images_data:
+        if "images" not in images_data:
             images_data = None
 
         if images_data is not None:
@@ -46,20 +62,8 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PostLikeSerializer(serializers.ModelSerializer):
     like = serializers.StringRelatedField(many=True)
-    like_count = serializers.IntegerField(source='like.count')
+    like_count = serializers.IntegerField(source="like.count")
 
     class Meta:
         model = Post
         fields = ["like", "like_count"]
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = '__all__'
-
-
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ("comments",)
