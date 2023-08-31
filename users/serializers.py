@@ -1,34 +1,42 @@
-# Django
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
-
-# DjangoRestFramework
 from rest_framework import serializers
 
 User = get_user_model()
 
-# from .models import *
 
-
-### 회원가입
+# 회원가입
 class SignupSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password]
-    )
-    password2 = serializers.CharField(write_only=True, required=True)
+    # 임시 데이터 필드 생성
+    confirm_password = serializers.CharField()
 
     class Meta:
         model = User
-        fields = ['name', 'email', 'password', 'password2']
+        fields = ['email', 'password', 'confirm_password']
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+                'required': True,
+                'validators': [validate_password],
+            },
+            'confirm_password': {
+                'write_only': True,
+                'required': True,
+            },
+        }
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({'비밀번호가 동일하지 않습니다.'})
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError(
+                {'detail': 'Password fields didn\'t match.'}
+            )
         return attrs
 
     def create(self, validated_data):
+        # confirm_password 제거
+        confirm_password = validated_data.pop('confirm_password', None)
+
         user = User.objects.create(
-            name=validated_data.get('name'),
             email=validated_data.get('email'),
         )
         user.set_password(validated_data.get('password'))
@@ -36,34 +44,16 @@ class SignupSerializer(serializers.ModelSerializer):
         return user
 
 
-### 로그인
-class LoginSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['name', 'password']
-        extra_kwargs = {
-            'name': {'validators': []}, 
-        }
+# 로그인
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        name = data.get("name")
-        password = data.get("password")
-
-        if not name:
-            raise serializers.ValidationError('아이디를 입력해주세요')
-
-        if not password:
-            raise serializers.ValidationError('비밀번호를 입력해주세요.')
-
-        user = authenticate(name=name, password=password)
-
-        if user is None:
-            raise serializers.ValidationError('아이디 및 비밀번호가 일치하지 않습니다.')
-
-        if not user.is_active:
-            raise serializers.ValidationError('사용 할 수 없는 계정입니다.')
-
-        return {"name": name, "password": password, "user": user}
+        user = authenticate(email=data['email'], password=data['password'])
+        if user and user.is_active:
+            return user
+        raise serializers.ValidationError('이메일, 비밀번호를 확인해 주세요.')
 
 
 ### 로그아웃
@@ -73,27 +63,7 @@ class LogoutSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-### User 프로필 조회
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['name', 'email', 'last_login']
-
-
-### User 프로필 수정
-class UserUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['name', 'email', 'password']
-
-        def validate(self, data):
-            email = data.get("email")
-
-            user = self.context['user']
-            name = user.name
-
-
-### 회원탈퇴
+# 회원탈퇴
 class SignoutSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -116,3 +86,23 @@ class SignoutSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('사용 할 수 없는 계정입니다.')
 
         return {"user": user}
+
+
+### User 프로필 조회
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name', 'email', 'last_login']
+
+
+### User 프로필 수정
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name', 'email', 'password']
+
+        def validate(self, data):
+            email = data.get("email")
+
+            user = self.context['user']
+            name = user.name

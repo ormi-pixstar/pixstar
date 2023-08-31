@@ -23,59 +23,32 @@ from .serializers import (
     SignoutSerializer,
     ProfileSerializer,
 )
+from .authentication import UserAuthenticationView, CookieJWTAuthentication
 
 
-### 회원가입
+# 회원가입
 class Signup(APIView):
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            return Response("회원가입에 성공했습니다.", status=status.HTTP_201_CREATED)
+            serializer.save()
+            return Response(
+                {'message': 'Signup is successful'},
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-### 회원탈퇴
-class Signout(APIView):
-    def post(self, request):
-        user = request.user
-
-        serializer = SignoutSerializer(data=request.data, context={"user": user})
-        if serializer.is_valid():
-            user.is_active = False
-            user.save()
-            return Response("회원탈퇴되었습니다.")
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-### 로그인
+# 로그인
 class Login(APIView):
+    message = '로그인 완료'
+    status_code = status.HTTP_200_OK
+
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
-
         if serializer.is_valid():
-            user = serializer.validated_data.get('user')
-            token = TokenObtainPairSerializer.get_token(user)
-            refresh_token = str(token)
-            access_token = str(token.access_token)
-
-            user = serializer.validated_data.get('user')
-            response = Response(
-                {
-                    "user": {"id": user.pk, "name": user.name},
-                    "message": "로그인 완료",
-                    "access_token": access_token,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-            response.set_cookie(
-                "access", access_token, httponly=True, samesite='None', secure=True
-                # "refresh", refresh_token, httponly=True, samesite='None', secure=True
-            )
-            return response
-
+            user = serializer.validated_data
+            return UserAuthenticationView.set_token_cookies(self, user)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -98,7 +71,21 @@ class Logout(APIView):
         response.delete_cookie("refresh")
         return response
 
-      
+
+# 회원탈퇴
+class Signout(APIView):
+    def post(self, request):
+        user = request.user
+
+        serializer = SignoutSerializer(data=request.data, context={"user": user})
+        if serializer.is_valid():
+            user.is_active = False
+            user.save()
+            return Response("회원탈퇴되었습니다.")
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 ### 회원조회
 class UserDetail(APIView):
     def get(self, request):
