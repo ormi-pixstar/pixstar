@@ -38,7 +38,7 @@ class CookieJWTAuthentication(BaseAuthentication):
 
         # 토큰이 있는지 확인
         if not access_token:
-            raise AuthenticationFailed('Token is missing.')
+            raise AuthenticationFailed('토큰이 없습니다.')
 
         try:
             # 토큰 유효성 검사
@@ -46,6 +46,6 @@ class CookieJWTAuthentication(BaseAuthentication):
             user = User.objects.get(id=payload['user_id'])
             return (user, access_token)
         except TokenError:
-            raise AuthenticationFailed('Token is invalid.')
+            raise AuthenticationFailed('토큰이 유효하지 않습니다.')
         except User.DoesNotExist:
-            raise AuthenticationFailed('User not found.')
+            raise AuthenticationFailed('사용자 정보를 찾을 수 없습니다.')

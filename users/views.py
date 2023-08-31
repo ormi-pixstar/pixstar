@@ -1,20 +1,12 @@
-# Django
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.views import View
-from django.contrib.auth import authenticate, login, logout
-
 # DjangoRestFramework
-from rest_framework import status, exceptions
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import AuthenticationFailed
 
 # DjangroRestFramework-simpleJWT
-from rest_framework_simplejwt.serializers import (
-    TokenObtainPairSerializer,
-    TokenRefreshSerializer,
-)
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+
 
 # Custom
 from .serializers import (
@@ -27,7 +19,7 @@ from .authentication import UserAuthenticationView, CookieJWTAuthentication
 
 
 # 회원가입
-class Signup(APIView):
+class SignupView(APIView):
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
@@ -40,7 +32,7 @@ class Signup(APIView):
 
 
 # 로그인
-class Login(APIView):
+class LoginView(APIView):
     message = '로그인 완료'
     status_code = status.HTTP_200_OK
 
@@ -52,42 +44,48 @@ class Login(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-### 로그아웃
-class Logout(APIView):
-    # def post(self, request):
-    #     refresh_token = request.COOKIES.get('refresh')
-    #     if refresh_token:
-    #         token = RefreshToken(refresh_token)
-    #         token.blacklist()
-    #     else:
-    #         return Response('비정상적인 토큰입니다.', status=status.HTTP_400_BAD_REQUEST)
-    #     response = Response('로그아웃 완료')
-    #     response.set_cookie('refresh', httponly=True, samesite='None', secure=True)
-    #     return response
-
+# 로그아웃
+class LogoutView(APIView):
     def post(self, request):
-        response = Response({"message": "로그아웃"}, status=status.HTTP_202_ACCEPTED)
-        response.delete_cookie("access")
-        response.delete_cookie("refresh")
-        return response
+        refresh_token = request.COOKIES.get('refresh')
+        access_token = request.COOKIES.get('access')
+
+        if refresh_token is None and access_token is None:
+            raise AuthenticationFailed('로그인한 사용자가 아닙니다.')
+
+        # 로그아웃 후 쿠키 삭제
+        res = Response(
+            {'message': 'Successfully logged out'},
+            status=status.HTTP_200_OK,
+        )
+        res.delete_cookie('access')
+        res.delete_cookie('refresh')
+        return res
 
 
 # 회원탈퇴
-class Signout(APIView):
-    def post(self, request):
-        user = request.user
+class SignoutView(APIView):
+    authentication_classes = (CookieJWTAuthentication,)
 
-        serializer = SignoutSerializer(data=request.data, context={"user": user})
+    def post(self, request):
+        serializer = SignoutSerializer(
+            data=request.data,
+            context={'request': request},
+        )
         if serializer.is_valid():
+            user = request.user
             user.is_active = False
             user.save()
-            return Response("회원탈퇴되었습니다.")
-
+            # 로그아웃 처리
+            res = Response({'message': '회원 탈퇴'}, status=status.HTTP_200_OK)
+            res.delete_cookie('access')
+            res.delete_cookie('refresh')
+            return res
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-### 회원조회
-class UserDetail(APIView):
+# 회원조회
+class ProfileView(APIView):
     def get(self, request):
         user = request.user
         serializer = ProfileSerializer(user)
@@ -103,8 +101,8 @@ class UserDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-### 회원수정
-class UserUpdate(APIView):
+# 회원수정
+class UserUpdateView(APIView):
     def get(self, request):
         pass
 

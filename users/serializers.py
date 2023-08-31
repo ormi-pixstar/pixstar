@@ -12,7 +12,7 @@ class SignupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'confirm_password']
+        fields = ('email', 'password', 'confirm_password')
         extra_kwargs = {
             'password': {
                 'write_only': True,
@@ -53,39 +53,18 @@ class LoginSerializer(serializers.Serializer):
         user = authenticate(email=data['email'], password=data['password'])
         if user and user.is_active:
             return user
-        raise serializers.ValidationError('이메일, 비밀번호를 확인해 주세요.')
-
-
-### 로그아웃
-class LogoutSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
+        raise serializers.ValidationError({'detail': '이메일, 비밀번호를 확인해 주세요.'})
 
 
 # 회원탈퇴
-class SignoutSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['password']
+class SignoutSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, required=True)
 
-    def vaildate(self, data):
-        password = data.get("password")
-        user = self.context['user']
-        name = user.name
-
-        if not password:
-            raise serializers.ValidationError('비밀번호를 입력해주세요.')
-
-        user = authenticate(name=name, password=password)
-
-        if user in None:
-            raise serializers.ValidationError('정상적인 접근이 아닙니다.')
-
-        if not user.is_active:
-            raise serializers.ValidationError('사용 할 수 없는 계정입니다.')
-
-        return {"user": user}
+    def validate(self, data):
+        user = self.context['request'].user
+        if not user.check_password(data['password']):
+            raise serializers.ValidationError({'detail': '비밀번호가 올바르지 않습니다.'})
+        return data
 
 
 ### User 프로필 조회
