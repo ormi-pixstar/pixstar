@@ -35,11 +35,10 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     image_urls = ImageSerializer(many=True, read_only=True)
-    comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["image_urls", "content", "comments"]
+        fields = ["image_urls", "content"]
 
     def create(self, validated_data):
         post = Post.objects.create(**validated_data)
