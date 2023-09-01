@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Image, Comment
-from .S3Storage import S3Storage
+from .storage import S3Storage
+
 
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,7 +16,16 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["post", "id", "writer", "parent", "comment", "created_at","updated_at", "reply"]
+        fields = [
+            "post",
+            "id",
+            "writer",
+            "parent",
+            "comment",
+            "created_at",
+            "updated_at",
+            "reply",
+        ]
 
     def get_reply(self, instance):
         serializer = self.__class__(instance.reply, many=True)

@@ -1,183 +1,128 @@
-# Django
 from django.contrib.auth import get_user_model
 
 # DjangoRestFramework
-from rest_framework import status, exceptions
+from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.exceptions import AuthenticationFailed
 
 # DjangroRestFramework-simpleJWT
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 # Custom
 from .serializers import (
     SignupSerializer,
     LoginSerializer,
-    SignoutSerializer,
-    UserUpdateSerializer
+    PasswordCheckSerializer,
+    ProfileSerializer,
+    ProfileUpdateSerializer,
 )
-
-from .authentication import CookieJWTAuthentication
-
-# from posts.serializers import UserPostSerializer
+from .authentication import UserAuthenticationView, CookieJWTAuthentication
 
 User = get_user_model()
 
 
-# 토큰 발급
-class UserAuthenticationView(APIView):
-    def set_token_cookies(self, user):
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-
-        res = Response(
-            {
-                'message': self.message,
-            },
-            status=self.status_code,
-        )
-
-        # JWT 토큰을 쿠키에 저장
-        res.set_cookie('access', access_token, httponly=True, secure=True)
-        res.set_cookie('refresh', refresh_token, httponly=True, secure=True)
-        return res
-    
-
-
-### 회원가입
-class SignupView(UserAuthenticationView):
-    message = '회원가입 성공'
-    status_code = status.HTTP_201_CREATED
-
+# 회원가입
+class SignupView(APIView):
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            return self.set_token_cookies(user)
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+            serializer.save()
+            return Response(
+                {'message': 'Signup is successful'},
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-### 로그인
-class LoginView(UserAuthenticationView):
-    message = '로그인 성공'
+# 로그인
+class LoginView(APIView):
+    message = '로그인 완료'
     status_code = status.HTTP_200_OK
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data
-            return self.set_token_cookies(user)
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+            return UserAuthenticationView.set_token_cookies(self, user)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-### 로그아웃
+# 로그아웃
 class LogoutView(APIView):
     def post(self, request):
-        try:
-            refresh_token = request.COOKIES.get('refresh')
+        refresh_token = request.COOKIES.get('refresh')
+        access_token = request.COOKIES.get('access')
 
-            if refresh_token is None:
-                return Response(
-                    {'detail': 'User already logout'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        if refresh_token is None and access_token is None:
+            raise AuthenticationFailed('로그인한 사용자가 아닙니다.')
 
-            # 로그아웃 후 쿠키 삭제
-            res = Response(
-                {'message': 'Successfully logged out'},
-                status=status.HTTP_200_OK,
-            )
+        # 로그아웃 후 쿠키 삭제
+        res = Response(
+            {'message': 'Successfully logged out'},
+            status=status.HTTP_200_OK,
+        )
+        res.delete_cookie('access')
+        res.delete_cookie('refresh')
+        return res
+
+
+# 회원탈퇴
+class SignoutView(APIView):
+    authentication_classes = (CookieJWTAuthentication,)
+
+    def post(self, request):
+        serializer = PasswordCheckSerializer(
+            data=request.data, context={'request': request}
+        )
+        if serializer.is_valid():
+            user = request.user
+            user.is_active = False
+            user.save()
+            # 로그아웃 처리
+            res = Response({'message': '회원 탈퇴'}, status=status.HTTP_200_OK)
             res.delete_cookie('access')
             res.delete_cookie('refresh')
             return res
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        except TokenError:
+
+# 프로필 조회 및 수정
+class ProfileView(APIView):
+    def get(self, request, user_id):
+        if not user_id:
             return Response(
-                {'detail': 'Token is invalid or expired.'},
-                status=status.HTTP_401_UNAUTHORIZED,
+                {"detail": "user_id 파라미터가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-
-### 회원탈퇴
-class SignoutView(APIView):
-    authentication_classes = [CookieJWTAuthentication]
-
-    def post(self, request):
-        user = request.user
-        serializer = SignoutSerializer(data=request.data)
-
-        # 토큰 확인
-        if not user.is_authenticated:
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
             return Response(
-                {'detail': 'User is not authenticated.'},
-                status=status.HTTP_401_UNAUTHORIZED,
+                {"detail": "해당 사용자가 없습니다."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        # 비밀번호 확인
-        if not serializer.is_valid():
-            return Response(
-                {'detail': 'Password is incorrect.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # 유저 비활성화(탈퇴)
-        user.is_active = False
-        user.save()
-
-        return Response(
-            {'message': 'Successfully deleted account'},
-            status=status.HTTP_200_OK,
-        )
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-      
-### 회원조회
-# class ProfileView(APIView):
-#     def get(self, request, user_id):
-#         try:
-#             user = User.objects.get(id=user_id)
-#         except User.DoesNotExist:
-#             return Response(
-#                 {"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND
-#             )
-#         serializer = UserPostSerializer(user)
-
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-### 회원수정
-class UserUpdateView(APIView):
-    authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated]
+class ProfileUpdateView(APIView):
+    authentication_classes = (CookieJWTAuthentication,)
+    permission_classes = (IsAuthenticated,)
 
     def put(self, request):
-        user = request.user
-        serializer = UserUpdateSerializer(instance=user, data=request.data)
+        serializer = ProfileUpdateSerializer(
+            instance=request.user,
+            data=request.data,
+            context={'request': request},
+        )
 
-        # 토큰 확인
-        if not user.is_authenticated:
+        if serializer.is_valid():
+            serializer.save()
             return Response(
-                {'detail': 'User is not authenticated.'},
-                status=status.HTTP_400_BAD_REQUEST,
+                {'message': '프로필 수정 완료'},
+                status=status.HTTP_200_OK,
             )
 
-        # 비밀번호 확인
-        if not serializer.is_valid():
-            return Response(
-                {'detail': 'Incorrect password.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

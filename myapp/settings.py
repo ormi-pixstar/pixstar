@@ -65,7 +65,7 @@ INSTALLED_APPS = [
     # 'sslserver',
     # CustomApp
     'user',
-    'posts',
+    'post',
 ]
 
 MIDDLEWARE = [

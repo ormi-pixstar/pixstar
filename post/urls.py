@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 
-app_name = 'posts'
+app_name = 'post'
 
 urlpatterns = [
     path("list/", views.PostList.as_view(), name='list'),
@@ -13,6 +13,14 @@ urlpatterns = [
     # S3이미지 업로드 테스트용
     path("test/image/", views.ImageUploadTest.as_view()),
     # 댓글
-    path('detail/<int:post_id>/comment/', views.CommentView.as_view(), name='comment_view'),
-    path('detail/<int:post_id>/comment/<int:comment_id>', views.CommentDetailView.as_view(), name='comment_detail_view'),
+    path(
+        'detail/<int:post_id>/comment/',
+        views.CommentView.as_view(),
+        name='comment_view',
+    ),
+    path(
+        'detail/<int:post_id>/comment/<int:comment_id>',
+        views.CommentDetailView.as_view(),
+        name='comment_detail_view',
+    ),
 ]

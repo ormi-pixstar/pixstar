@@ -18,8 +18,9 @@ from django.db.models import Count
 from dotenv import load_dotenv
 from django.contrib.auth import get_user_model
 import jwt
+from rest_framework_simplejwt.tokens import AccessToken
 from myapp.settings import SECRET_KEY
-from .S3Storage import S3Storage
+from .storage import S3Storage
 
 User = get_user_model()
 
@@ -86,10 +87,9 @@ class PostList(APIView):
 class PostWrite(APIView):
     def post(self, request):
         serializer = PostSerializer(context={"request": request}, data=request.data)
-        access = request.COOKIES['access']
-        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-        user = get_object_or_404(User, pk=payload['user_id'])
         if serializer.is_valid():
+            prefer = AccessToken(request.COOKIES["access"])['user_id']  # 이건 완성형
+            user = User.objects.get(id=prefer)
             post = serializer.save(writer=user)
             post.save()
             return Response(status=status.HTTP_201_CREATED)
@@ -100,7 +100,7 @@ class PostDetail(APIView):
     def get(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
         serializer_post = PostSerializer(post).data
-        
+
         comments = Comment.objects.filter(post=post)
         serialized_comments = CommentSerializer(comments, many=True).data
 
@@ -108,7 +108,7 @@ class PostDetail(APIView):
             "post": serializer_post,
             "comments": serialized_comments,
         }
-        
+
         return Response(data, status=status.HTTP_200_OK)
 
     # def get(self, request, pk):
@@ -180,12 +180,12 @@ class ImageUploadTest(APIView):
 class CommentView(APIView):
     # comment 조회
     def get(self, request, post_id):
-            post = Post.objects.get(id=post_id)
-            # comments = post.comment_set.all()
-            comments = Comment.objects.filter(post_id=post_id)
-            serializer = CommentSerializer(comments, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        post = Post.objects.get(id=post_id)
+        # comments = post.comment_set.all()
+        comments = Comment.objects.filter(post_id=post_id)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     # comment 작성
     def post(self, request, post_id):
         # request.data는 사용자의 입력 데이터
@@ -226,9 +226,7 @@ class CommentDetailView(APIView):
 
     # comment 수정
     def put(self, request, post_id, comment_id, format=None):
-        comment = Comment.objects.get(
-            post_id=post_id, id=comment_id
-        )
+        comment = Comment.objects.get(post_id=post_id, id=comment_id)
 
         access = request.COOKIES['access']
         payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
@@ -245,11 +243,9 @@ class CommentDetailView(APIView):
         else:
             return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
 
-    # comment 삭제    
+    # comment 삭제
     def delete(self, request, post_id, comment_id):
-        comment = Comment.objects.get(
-            post_id=post_id, id=comment_id
-        )
+        comment = Comment.objects.get(post_id=post_id, id=comment_id)
 
         access = request.COOKIES['access']
         payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
@@ -261,4 +257,3 @@ class CommentDetailView(APIView):
             return Response("삭제되었습니다.", status=status.HTTP_204_NO_CONTENT)
         else:
             return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
-        
