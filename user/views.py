@@ -117,7 +117,7 @@ class ProfileUpdateView(APIView):
             data=request.data,
             context={'request': request},
         )
-
+        
         if serializer.is_valid():
             serializer.save()
             return Response(

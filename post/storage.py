@@ -35,6 +35,7 @@ class S3Storage():
             bucketName = self.bucket,
             imageName = self.imageName
         )
+        print(url)
         return url
     
     def delete(self, imageName):

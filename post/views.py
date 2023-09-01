@@ -88,7 +88,7 @@ class PostWrite(APIView):
     def post(self, request):
         serializer = PostSerializer(context={"request": request}, data=request.data)
         if serializer.is_valid():
-            prefer = AccessToken(request.COOKIES["access"])['user_id']  # 이건 완성형
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
             user = User.objects.get(id=prefer)
             post = serializer.save(writer=user)
             post.save()
@@ -110,11 +110,6 @@ class PostDetail(APIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
-
-    # def get(self, request, pk):
-    #     post = get_object_or_404(Post, pk=pk)
-    #     serializer = PostSerializer(post)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PostEdit(APIView):
@@ -148,9 +143,8 @@ class PostLike(APIView):
 
     def put(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        access = request.COOKIES['access']
-        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-        user = get_object_or_404(User, pk=payload['user_id'])
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
         if user in post.like.all():
             post.like.remove(user)
             return Response("unlike", status=status.HTTP_200_OK)
@@ -191,9 +185,8 @@ class CommentView(APIView):
         # request.data는 사용자의 입력 데이터
         serializer = CommentSerializer(data=request.data)
 
-        access = request.COOKIES['access']
-        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-        user = get_object_or_404(User, pk=payload['user_id'])
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
 
         if serializer.is_valid():  # 유효성 검사
             # comment = serializer.save(writer=request.user, post_id=post_id)
@@ -209,9 +202,8 @@ class CommentDetailView(APIView):
         # request.data는 사용자의 입력 데이터
         serializer = CommentSerializer(data=request.data)
 
-        access = request.COOKIES['access']
-        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-        user = get_object_or_404(User, pk=payload['user_id'])
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
 
         post = Post.objects.get(pk=post_id)
         comment = Comment.objects.get(pk=comment_id)
@@ -228,9 +220,8 @@ class CommentDetailView(APIView):
     def put(self, request, post_id, comment_id, format=None):
         comment = Comment.objects.get(post_id=post_id, id=comment_id)
 
-        access = request.COOKIES['access']
-        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-        user = get_object_or_404(User, pk=payload['user_id'])
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
 
         # if request.user == comment.writer:
         if user == comment.writer:
@@ -247,9 +238,8 @@ class CommentDetailView(APIView):
     def delete(self, request, post_id, comment_id):
         comment = Comment.objects.get(post_id=post_id, id=comment_id)
 
-        access = request.COOKIES['access']
-        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-        user = get_object_or_404(User, pk=payload['user_id'])
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
 
         # if request.user == comment.writer:
         if user == comment.writer:

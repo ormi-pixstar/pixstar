@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from post.storage import S3Storage
 
 User = get_user_model()
 
@@ -105,10 +106,20 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         validated_data.pop('current_password', None)
 
-        for attr, value in validated_data.items():
-            # 새로운 데이터가 주어진 경우만 값을 업데이트하고, 그렇지 않으면 기존 값을 유지
-            new_value = value if value is not None else getattr(instance, attr)
-            setattr(instance, attr, new_value)
+        instance.username = validated_data.get("username", instance.username)
+        password = validated_data.get("password", instance.password)
+        instance.set_password(password)
+        image = self.context["request"].FILES
+
+        if "profile_img" not in image:
+            image = None
+
+        if image is not None:
+            s = S3Storage()
+            if instance.profile is not None:
+                s.delete(instance.profile_img)
+            s.upload(instance.email, image)
+            instance.profile_img = s.getUrl()
 
         instance.save()
         return instance
