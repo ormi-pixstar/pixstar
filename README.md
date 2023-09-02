@@ -53,7 +53,7 @@
  ### 3.1 프로젝트 구조
 
  ### 3.2 Use Case Diagram
- ![UseCaseDiagram](./src_readme/Pixstar_USD.png)
+ ![UseCaseDiagram](/src_readme/Pixstar_USD.png)
 
  ### 3.3 ERD 구조
 
