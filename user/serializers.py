@@ -109,24 +109,17 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         instance.username = validated_data.get("username", instance.username)
         password = validated_data.get("password", instance.password)
         instance.set_password(password)
-        image = self.context["request"].FILES
+        image_data = self.context["request"].FILES
 
-        if "image_url" not in image:
-            image = None
+        if "image_url" not in image_data:
+            image_data = None
 
-        # if image is not None:
-        #     s = S3Storage()
-        #     if instance.image_url is not None:
-        #         s.delete(instance.image_url)
-        #     s.upload(instance.email, image.get('image_url'))
-        #     instance.image_url = s.getUrl()
-
-        if image is not None:
+        if image_data is not None:
             s = S3Storage()
-            image = User.objects.filter(email=instance)
-            s.delete(image.image_url)
-            for image_data in image.getlist('image_url'):
-                s.upload(instance.email, image_data)
+            image = User.objects.get(email=instance.email)
+            s.image_delete(image)
+            for data in image_data.getlist('image_url'):
+                s.upload(instance.email, data)
                 instance.image_url = s.getUrl()
 
         instance.save()

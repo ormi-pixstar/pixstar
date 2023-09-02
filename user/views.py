@@ -114,8 +114,8 @@ class ProfileUpdateView(APIView):
     def put(self, request):
         serializer = ProfileUpdateSerializer(
             instance=request.user,
-            data=request.data,
             context={'request': request},
+            data=request.data,
         )
         
         if serializer.is_valid():
