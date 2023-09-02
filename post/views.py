@@ -101,7 +101,7 @@ class PostDetail(APIView):
         post = get_object_or_404(Post, pk=pk)
         serializer_post = PostSerializer(post).data
 
-        comments = Comment.objects.filter(post=post)
+        comments = Comment.objects.filter(parent=None, post=post)
         serialized_comments = CommentSerializer(comments, many=True).data
 
         data = {
@@ -176,7 +176,7 @@ class CommentView(APIView):
     def get(self, request, post_id):
         post = Post.objects.get(id=post_id)
         # comments = post.comment_set.all()
-        comments = Comment.objects.filter(post_id=post_id)
+        comments = Comment.objects.filter(parent=None, post_id=post_id)
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -206,6 +206,7 @@ class CommentDetailView(APIView):
         user = User.objects.get(id=prefer)
 
         post = Post.objects.get(pk=post_id)
+        
         comment = Comment.objects.get(pk=comment_id)
         if serializer.is_valid():  # 유효성 검사
             # serializer.validated_data["writer"] = request.user
