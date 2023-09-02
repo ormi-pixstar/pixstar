@@ -23,7 +23,7 @@
  
 
  #### 2.1.2 프레임워크
- - Django 4.24
+ - Django 4.2.4
  - Django REST framework 3.14
 
 
@@ -40,18 +40,20 @@
 
  ### 2.2 배포 환경
  - AWS Lighsail
+  - Ubuntu 22.04 LTS
  - AWS S3 Bucket
 
 
 
  ### 2.3 배포 URL
+ - 23.09.02 기준 NGNXI 및 Https 적용 진행 중
 
 
 ## 3. 프로젝트 구조 및 역할 분담
  ### 3.1 프로젝트 구조
 
  ### 3.2 Use Case Diagram
- 
+ ![UseCaseDiagram](./src_readme/Pixstar_USD.png)
 
  ### 3.3 ERD 구조
 
