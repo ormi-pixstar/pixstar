@@ -38,7 +38,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ["image_urls", "content"]
+        fields = '__all__'
 
     def create(self, validated_data):
         post = Post.objects.create(**validated_data)
