@@ -72,7 +72,7 @@ class PasswordCheckSerializer(serializers.Serializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('email', 'username', 'profile_img')
+        fields = ('email', 'username', 'image_url')
 
 
 # 프로필 수정
@@ -81,7 +81,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'profile_img', 'password', 'current_password')
+        fields = ('username', 'image_url', 'password', 'current_password')
         extra_kwargs = {
             'username': {
                 'required': False,
@@ -111,15 +111,23 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         instance.set_password(password)
         image = self.context["request"].FILES
 
-        if "profile_img" not in image:
+        if "image_url" not in image:
             image = None
+
+        # if image is not None:
+        #     s = S3Storage()
+        #     if instance.image_url is not None:
+        #         s.delete(instance.image_url)
+        #     s.upload(instance.email, image.get('image_url'))
+        #     instance.image_url = s.getUrl()
 
         if image is not None:
             s = S3Storage()
-            if instance.profile is not None:
-                s.delete(instance.profile_img)
-            s.upload(instance.email, image)
-            instance.profile_img = s.getUrl()
+            image = User.objects.filter(email=instance)
+            s.delete(image.image_url)
+            for image_data in image.getlist('image_url'):
+                s.upload(instance.email, image_data)
+                instance.image_url = s.getUrl()
 
         instance.save()
         return instance
