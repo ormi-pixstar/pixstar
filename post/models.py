@@ -14,7 +14,7 @@ class Post(models.Model):
 
 class Image(models.Model):
     post = models.ForeignKey('Post', related_name='image_urls', on_delete=models.CASCADE)
-    image_url = models.CharField()
+    image_url = models.CharField(null=False, blank=False)
 
 
 class Comment(models.Model):

@@ -16,10 +16,10 @@ class S3Storage():
             region_name = self.region
         )
 
-    def upload(self, post_pk, imageName):
+    def upload(self, pk, imageName):
         ran = random.uniform(0, 10)
-        self.imageName = "{post_pk}_{random}_{imageName}".format(
-            post_pk = post_pk,
+        self.imageName = "{pk}_{random}_{imageName}".format(
+            pk = pk,
             random = ran,
             imageName = imageName
         )
@@ -39,4 +39,8 @@ class S3Storage():
     
     def delete(self, imageName):
         name = imageName.image_url.split('/')[-1]
+        self.s3_resource.Object(self.bucket, name).delete()
+
+    def image_delete(self, imageName):
+        name = str(imageName.image_url).split('/')[-1]
         self.s3_resource.Object(self.bucket, name).delete()
