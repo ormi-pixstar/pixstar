@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Image, Comment
 from .storage import S3Storage
+from user.serializers import UserSerializer
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -35,6 +36,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     image_urls = ImageSerializer(many=True, read_only=True)
+    writer = UserSerializer(read_only=True)
 
     class Meta:
         model = Post
