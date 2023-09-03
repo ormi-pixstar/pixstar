@@ -29,8 +29,22 @@ class UserAuthenticationView(APIView):
         )
 
         # JWT 토큰을 쿠키에 저장
-        res.set_cookie('access', access_token, httponly=True, secure=True)
-        res.set_cookie('refresh', refresh_token, httponly=True, secure=True)
+        res.set_cookie(
+            'access',
+            access_token,
+            httponly=True,
+            secure=True,
+            samesite='None',
+            path='/',
+        )
+        res.set_cookie(
+            'refresh',
+            refresh_token,
+            httponly=True,
+            secure=True,
+            samesite='None',
+            path='/',
+        )
         return res
 
 
