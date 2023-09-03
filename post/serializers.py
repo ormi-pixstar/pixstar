@@ -42,7 +42,7 @@ class PostSerializer(serializers.ModelSerializer):
         post = Post.objects.create(**validated_data)
         images_data = self.context['request'].FILES
         s = S3Storage()
-        for image in images_data.getlist('images'):
+        for image in images_data.getlist('image_urls'):
             s.upload(post.pk, image)
             Image.objects.create(post=post, image_url=s.getUrl())
         return post
@@ -51,7 +51,7 @@ class PostSerializer(serializers.ModelSerializer):
         instance.content = validated_data.get("content", instance.content)
         images_data = self.context["request"].FILES
 
-        if "images" not in images_data:
+        if "image_urls" not in images_data:
             images_data = None
 
         if images_data is not None:
@@ -60,7 +60,7 @@ class PostSerializer(serializers.ModelSerializer):
             for image in images:
                 s.delete(image)
             images.delete()
-            for image_data in images_data.getlist('images'):
+            for image_data in images_data.getlist('image_urls'):
                 s.upload(instance.pk, image_data)
                 Image.objects.create(post=instance, image_url=s.getUrl())
         instance.save()
