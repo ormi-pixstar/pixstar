@@ -68,11 +68,11 @@ class PasswordCheckSerializer(serializers.Serializer):
         return data
 
 
-# 프로필 조회
-class ProfileSerializer(serializers.ModelSerializer):
+# 유저 정보 조회
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('email', 'username', 'image_url')
+        fields = ('id', 'email', 'username', 'profile_img')
 
 
 # 프로필 수정
