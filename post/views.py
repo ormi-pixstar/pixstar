@@ -99,22 +99,8 @@ class PostWrite(APIView):
 class PostDetail(APIView):
     def get(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        serializer_post = PostSerializer(post).data
-
-        comments = Comment.objects.filter(parent=None, post=post)
-        serialized_comments = CommentSerializer(comments, many=True).data
-
-        data = {
-            "post": serializer_post,
-            "comments": serialized_comments,
-        }
-
-        return Response(data, status=status.HTTP_200_OK)
-
-    # def get(self, request, pk):
-    #     post = get_object_or_404(Post, pk=pk)
-    #     serializer = PostSerializer(post)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = PostSerializer(post)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PostEdit(APIView):
@@ -181,7 +167,6 @@ class CommentView(APIView):
     # comment 조회
     def get(self, request, post_id):
         post = Post.objects.get(id=post_id)
-        # comments = post.comment_set.all()
         comments = Comment.objects.filter(parent=None, post_id=post_id)
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
