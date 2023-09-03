@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Image, Comment
 from .storage import S3Storage
+from user.serializers import UserSerializer
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -10,12 +11,14 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    writer = serializers.ReadOnlyField(source="user.writer")
+    post_id = serializers.ReadOnlyField(source="post.pk")
     reply = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = [
-            "post",
+            "post_id",
             "id",
             "writer",
             "parent",
@@ -33,10 +36,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     image_urls = ImageSerializer(many=True, read_only=True)
+    writer = UserSerializer(read_only=True)
 
     class Meta:
         model = Post
-        fields = ["image_urls", "content"]
+        fields = '__all__'
 
     def create(self, validated_data):
         post = Post.objects.create(**validated_data)

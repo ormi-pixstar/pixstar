@@ -15,7 +15,7 @@ from .serializers import (
     SignupSerializer,
     LoginSerializer,
     PasswordCheckSerializer,
-    ProfileSerializer,
+    UserSerializer,
     ProfileUpdateSerializer,
 )
 from .authentication import UserAuthenticationView, CookieJWTAuthentication
@@ -103,7 +103,7 @@ class ProfileView(APIView):
                 {"detail": "해당 사용자가 없습니다."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = ProfileSerializer(user)
+        serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
