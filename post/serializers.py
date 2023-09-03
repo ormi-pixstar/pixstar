@@ -10,8 +10,6 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    writer = serializers.ReadOnlyField(source="user.writer")
-    post = serializers.ReadOnlyField(source="post.pk")
     reply = serializers.SerializerMethodField()
 
     class Meta:
