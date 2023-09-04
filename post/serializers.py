@@ -9,6 +9,13 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = ["image_url"]
 
 
+class ImageDeleteSerializer(serializers.ModelSerializer):
+    deleted_img = serializers.CharField()
+
+    class Meta:
+        fields = ["deleted_img"]
+
+
 class CommentSerializer(serializers.ModelSerializer):
     writer = serializers.ReadOnlyField(source="user.writer")
     post_id = serializers.ReadOnlyField(source="post.pk")
@@ -35,12 +42,13 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     image_urls = ImageSerializer(many=True, read_only=True)
-    deleted_img = serializers.JSONField()
+    # deleted_imgs = ImageDeleteSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = '__all__'
-
+        fields = ["image_urls", "content"]
+        # fields = ["image_urls", "content", "deleted_imgs"]
+    
     def create(self, validated_data):
         post = Post.objects.create(**validated_data)
         images_data = self.context['request'].FILES
@@ -53,23 +61,37 @@ class PostSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.content = validated_data.get("content", instance.content)
         images_data = self.context["request"].FILES
-        deleted_image = validated_data.get("deleted_img")
+        # deleted_image = validated_data.get("deleted_imgs")
+        # print(validated_data.get("deleted_imgs"))
 
         if "image_urls" not in images_data:
             images_data = None
 
         if images_data is not None:
             s = S3Storage()
+            images = Image.objects.filter(post=instance)
+            
+            for image in images:
+                s.delete(image)
+            images.delete()
+            
             for image_data in images_data.getlist('image_urls'):
                 s.upload(instance.pk, image_data)
-                Image.objects.create(post=instance, image_url=s.getUrl())
+                Image.objects.create(post=instance, image_url=s.getUrl)
+            
 
-        if deleted_image:
-            s = S3Storage()
-            for image in deleted_image:
-                s.edit_delete(image)
-                img = Image.objects.filter(image_url=image)
-                img.delete()
+        # if images_data is not None:
+        #     s = S3Storage()
+        #     for image_data in images_data.getlist('image_urls'):
+        #         s.upload(instance.pk, image_data)
+        #         Image.objects.create(post=instance, image_url=s.getUrl())
+
+        # if deleted_image:
+        #     s = S3Storage()
+        #     for image in deleted_image:
+        #         s.edit_delete(image)
+        #         img = Image.objects.filter(image_url=image)
+        #         img.delete()
 
         instance.save()
         return instance
