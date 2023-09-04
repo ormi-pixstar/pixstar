@@ -142,24 +142,6 @@ class PostLike(APIView):
         post.like.add(user)
         return Response("like", status=status.HTTP_200_OK)
 
-
-# 이미지 업로드 TEST용, 배포 시 삭제
-class ImageUploadTest(APIView):
-    parser_classes = (MultiPartParser,)
-
-    @extend_schema(request={"file": {"type": "file"}}, responses={201: None})
-    def post(self, request):
-        file_obj = request.FILES.get('file')
-        if not file_obj:
-            return Response({"error": "파일이 없습니다."}, status=400)
-
-        bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
-        s3 = boto3.client('s3')
-        s3.upload_fileobj(file_obj, bucket_name, file_obj.name)
-
-        return Response(status=201)
-
-
 # comment 조회, 작성
 class CommentView(APIView):
     # comment 조회
@@ -195,7 +177,7 @@ class CommentDetailView(APIView):
         user = User.objects.get(id=prefer)
 
         post = Post.objects.get(pk=post_id)
-        
+
         comment = Comment.objects.get(pk=comment_id)
         if serializer.is_valid():  # 유효성 검사
             # serializer.validated_data["writer"] = request.user
