@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # 환경변수 로드
 load_dotenv()
@@ -8,9 +9,9 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'user.User'
 
-LOGIN_URL = 'api/users/login/'
+LOGIN_URL = 'api/user/login/'
 
 
 # Quick-start development settings - unsuitable for production
@@ -40,8 +41,8 @@ ALLOWED_HOSTS = [
 
 # CORS
 CORS_ORIGIN_WHITELIST = [
-    'http://127.0.0.1:3000',
-    'http://localhost:3000',
+    'https://127.0.0.1:3000',
+    'https://localhost:3000',
     'https://ormi-pixstar.github.io',
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -61,9 +62,10 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'storages',
     'corsheaders',
+    'sslserver',
     # CustomApp
-    'users',
-    'posts',
+    'user',
+    'post',
 ]
 
 MIDDLEWARE = [
@@ -161,9 +163,39 @@ MEDIA_URL = '/media/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
+    # simplejwt JWTAuthentication을 사용
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # API 접근 권한 설정
+    'DEFAULT_PERMISSION_CLASSES': (
+        # 'rest_framework.permissions.IsAuthenticated', # 인증된 사용자만 접근
+        # 'rest_framework.permissions.IsAdminUser', # 관리자만 접근
+        'rest_framework.permissions.AllowAny',  # 누구나 접근
+    ),
+    # Spectacular를 사용
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
 SPECTACURAL_SETTINGS = {
     'TITLE': 'Pixstar API',
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=14),
+    'ROTATE_REFRESH_TOKENS': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': os.getenv('SIGNING_KEY'),
+    'VERIFYING_KEY': None,
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': (
+        'rest_framework_simplejwt.tokens.AccessToken',
+        'rest_framework_simplejwt.tokens.RefreshToken',
+    ),
+    'TOKEN_TYPE_CLAIM': 'token_type',
 }

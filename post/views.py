@@ -13,10 +13,16 @@ from .serializers import (
     ImageSerializer,
     PostLikeSerializer,
     CommentSerializer,
-    CommentCreateSerializer,
 )
 from django.db.models import Count
 from dotenv import load_dotenv
+from django.contrib.auth import get_user_model
+import jwt
+from rest_framework_simplejwt.tokens import AccessToken
+from myapp.settings import SECRET_KEY
+from .storage import S3Storage
+
+User = get_user_model()
 
 # 환경변수 로드
 load_dotenv()
@@ -82,7 +88,9 @@ class PostWrite(APIView):
     def post(self, request):
         serializer = PostSerializer(context={"request": request}, data=request.data)
         if serializer.is_valid():
-            post = serializer.save(writer=request.user)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
+            post = serializer.save(writer=user)
             post.save()
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -103,15 +111,19 @@ class PostEdit(APIView):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostDelete(APIView):
     def delete(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
+        images = Image.objects.filter(post=post)
+        s = S3Storage()
+        for image in images:
+            s.delete(image)
         post.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PostLike(APIView):
@@ -122,53 +134,71 @@ class PostLike(APIView):
 
     def put(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        if request.user in post.like.all():
-            post.like.remove(request.user)
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
+        if user in post.like.all():
+            post.like.remove(user)
             return Response("unlike", status=status.HTTP_200_OK)
-        post.like.add(request.user)
+        post.like.add(user)
         return Response("like", status=status.HTTP_200_OK)
 
 
-# 이미지 업로드 TEST용, 배포 시 삭제
-class ImageUploadTest(APIView):
-    parser_classes = (MultiPartParser,)
-
-    @extend_schema(request={"file": {"type": "file"}}, responses={201: None})
-    def post(self, request):
-        file_obj = request.FILES.get('file')
-        # print(request.FILES)
-        if not file_obj:
-            return Response({"error": "파일이 없습니다."}, status=400)
-
-        bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
-        s3 = boto3.client('s3')
-        s3.upload_fileobj(file_obj, bucket_name, file_obj.name)
-
-        return Response(status=201)
-
-
-## 댓글 작성, 조회
+# comment 조회, 작성
 class CommentView(APIView):
+    # comment 조회
     def get(self, request, post_id):
         post = Post.objects.get(id=post_id)
-        comments = post.comment_set.all()
+        comments = Comment.objects.filter(parent=None, post_id=post_id)
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    # comment 작성
     def post(self, request, post_id):
-        serializer = CommentCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(writer=request.writer, post_id=post_id)
-            return Response(serializer.data, status.HTTP_201_OK)
+        # request.data는 사용자의 입력 데이터
+        serializer = CommentSerializer(data=request.data)
+
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
+
+        if serializer.is_valid():  # 유효성 검사
+            # comment = serializer.save(writer=request.user, post_id=post_id)
+            comments = serializer.save(writer=user, post_id=post_id)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-## 댓글 수정, 삭제
+# recomment 작성 및 comemnt의 수정, 삭제
 class CommentDetailView(APIView):
-    def put(self, request, post_id, comment_id):
-        comment = get_object_or_404(Comment, id=comment_id)
-        if request.user == comment.user:
-            serializer = CommentCreateSerializer(comment, data=request.data)
+    # recomment 작성
+    def post(self, request, post_id, comment_id):
+        # request.data는 사용자의 입력 데이터
+        serializer = CommentSerializer(data=request.data)
+
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
+
+        post = Post.objects.get(pk=post_id)
+
+        comment = Comment.objects.get(pk=comment_id)
+        if serializer.is_valid():  # 유효성 검사
+            # serializer.validated_data["writer"] = request.user
+            serializer.validated_data["writer"] = user
+            serializer.validated_data["parent"] = comment
+            serializer.validated_data["post"] = post
+            serializer.save()  # 저장
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # comment 수정
+    def put(self, request, post_id, comment_id, format=None):
+        comment = Comment.objects.get(post_id=post_id, id=comment_id)
+
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
+
+        # if request.user == comment.writer:
+        if user == comment.writer:
+            serializer = CommentSerializer(comment, data=request.data)
             if serializer.is_valid():
                 serializer.save()  # post에 user 정보 있기 때문에 (user=request.user) 생략
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -177,9 +207,15 @@ class CommentDetailView(APIView):
         else:
             return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
 
+    # comment 삭제
     def delete(self, request, post_id, comment_id):
-        comment = get_object_or_404(Comment, id=comment_id)
-        if request.user == comment.user:
+        comment = Comment.objects.get(post_id=post_id, id=comment_id)
+
+        prefer = AccessToken(request.COOKIES["access"])['user_id']
+        user = User.objects.get(id=prefer)
+
+        # if request.user == comment.writer:
+        if user == comment.writer:
             comment.delete()
             return Response("삭제되었습니다.", status=status.HTTP_204_NO_CONTENT)
         else:

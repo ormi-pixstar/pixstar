@@ -13,17 +13,17 @@ class Post(models.Model):
 
 
 class Image(models.Model):
-    post = models.ForeignKey('Post', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='', null=False, blank=False)
+    post = models.ForeignKey('Post', related_name='image_urls', on_delete=models.CASCADE)
+    image_url = models.CharField(null=False, blank=False)
 
 
 class Comment(models.Model):
-    post = models.ForeignKey('Post', related_name='comments', on_delete=models.CASCADE)
+    post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='comments')
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
-    # parent = models.ForeignKey('self', related_name='recomments', on_delete=models.CASCADE, null=True, blank=True)
-    comments = models.TextField()
+    parent = models.ForeignKey('self', related_name='reply', on_delete=models.CASCADE, null=True, blank=True)
+    comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.comments
+        return self.comment
