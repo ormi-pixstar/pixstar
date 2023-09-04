@@ -10,9 +10,9 @@ from drf_spectacular.utils import extend_schema
 from .models import Post, Image, Comment
 from .serializers import (
     PostSerializer,
-    ImageSerializer,
     PostLikeSerializer,
     CommentSerializer,
+    PostDetailSerializer
 )
 from django.db.models import Count
 from dotenv import load_dotenv
@@ -72,7 +72,7 @@ class PostList(APIView):
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request)
 
-        serializer = PostSerializer(page, many=True)
+        serializer = PostDetailSerializer(page, many=True)
 
         response_data = {
             'results': serializer.data,
@@ -99,7 +99,7 @@ class PostWrite(APIView):
 class PostDetail(APIView):
     def get(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(post)
+        serializer = PostDetailSerializer(post)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -141,7 +141,6 @@ class PostLike(APIView):
             return Response("unlike", status=status.HTTP_200_OK)
         post.like.add(user)
         return Response("like", status=status.HTTP_200_OK)
-
 
 # comment 조회, 작성
 class CommentView(APIView):

@@ -10,6 +10,15 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = ["image_url"]
 
 
+class PostLikeSerializer(serializers.ModelSerializer):
+    like = serializers.StringRelatedField(many=True)
+    like_count = serializers.IntegerField(source="like.count")
+
+    class Meta:
+        model = Post
+        fields = ["like", "like_count"]
+
+
 class CommentSerializer(serializers.ModelSerializer):
     writer = serializers.ReadOnlyField(source="user.writer")
     post_id = serializers.ReadOnlyField(source="post.pk")
@@ -34,7 +43,7 @@ class CommentSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
-class PostSerializer(serializers.ModelSerializer):
+class PostDetailSerializer(serializers.ModelSerializer):
     image_urls = ImageSerializer(many=True, read_only=True)
     writer = UserSerializer(read_only=True)
 
@@ -42,6 +51,14 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = '__all__'
 
+
+class PostSerializer(serializers.ModelSerializer):
+    image_urls = ImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ["image_urls", "content"]
+    
     def create(self, validated_data):
         post = Post.objects.create(**validated_data)
         images_data = self.context['request'].FILES
@@ -61,20 +78,14 @@ class PostSerializer(serializers.ModelSerializer):
         if images_data is not None:
             s = S3Storage()
             images = Image.objects.filter(post=instance)
+            
             for image in images:
                 s.delete(image)
             images.delete()
+            
             for image_data in images_data.getlist('image_urls'):
                 s.upload(instance.pk, image_data)
-                Image.objects.create(post=instance, image_url=s.getUrl())
+                Image.objects.create(post=instance, image_url=s.getUrl)
+
         instance.save()
         return instance
-
-
-class PostLikeSerializer(serializers.ModelSerializer):
-    like = serializers.StringRelatedField(many=True)
-    like_count = serializers.IntegerField(source="like.count")
-
-    class Meta:
-        model = Post
-        fields = ["like", "like_count"]
