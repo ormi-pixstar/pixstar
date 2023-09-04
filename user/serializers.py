@@ -72,7 +72,7 @@ class PasswordCheckSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'profile_img')
+        fields = ('id', 'email', 'username', 'image_url')
 
 
 # 프로필 수정

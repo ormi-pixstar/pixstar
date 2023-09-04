@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Image, Comment
 from .storage import S3Storage
+from user.serializers import UserSerializer
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -9,11 +10,13 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = ["image_url"]
 
 
-class ImageDeleteSerializer(serializers.ModelSerializer):
-    deleted_img = serializers.CharField()
+class PostLikeSerializer(serializers.ModelSerializer):
+    like = serializers.StringRelatedField(many=True)
+    like_count = serializers.IntegerField(source="like.count")
 
     class Meta:
-        fields = ["deleted_img"]
+        model = Post
+        fields = ["like", "like_count"]
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -40,14 +43,21 @@ class CommentSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
+class PostDetailSerializer(serializers.ModelSerializer):
+    image_urls = ImageSerializer(many=True, read_only=True)
+    writer = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+
 class PostSerializer(serializers.ModelSerializer):
     image_urls = ImageSerializer(many=True, read_only=True)
-    # deleted_imgs = ImageDeleteSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
         fields = ["image_urls", "content"]
-        # fields = ["image_urls", "content", "deleted_imgs"]
     
     def create(self, validated_data):
         post = Post.objects.create(**validated_data)
@@ -61,8 +71,6 @@ class PostSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.content = validated_data.get("content", instance.content)
         images_data = self.context["request"].FILES
-        # deleted_image = validated_data.get("deleted_imgs")
-        # print(validated_data.get("deleted_imgs"))
 
         if "image_urls" not in images_data:
             images_data = None
@@ -78,29 +86,6 @@ class PostSerializer(serializers.ModelSerializer):
             for image_data in images_data.getlist('image_urls'):
                 s.upload(instance.pk, image_data)
                 Image.objects.create(post=instance, image_url=s.getUrl)
-            
-
-        # if images_data is not None:
-        #     s = S3Storage()
-        #     for image_data in images_data.getlist('image_urls'):
-        #         s.upload(instance.pk, image_data)
-        #         Image.objects.create(post=instance, image_url=s.getUrl())
-
-        # if deleted_image:
-        #     s = S3Storage()
-        #     for image in deleted_image:
-        #         s.edit_delete(image)
-        #         img = Image.objects.filter(image_url=image)
-        #         img.delete()
 
         instance.save()
         return instance
-
-
-class PostLikeSerializer(serializers.ModelSerializer):
-    like = serializers.StringRelatedField(many=True)
-    like_count = serializers.IntegerField(source="like.count")
-
-    class Meta:
-        model = Post
-        fields = ["like", "like_count"]
