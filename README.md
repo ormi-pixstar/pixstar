@@ -68,17 +68,31 @@
     <thead align="center">
         <tr>
             <th>이동섭</th>
-            <th>맹지연</th>
             <th>이지수</th>
+            <th>맹지연</th>
             <th>김영조</th>
         </tr>
     </thead>
     <tbody>
+      <tr>
+            <td align="center">
+                <a href="https://github.com/tosecfromback">@tosecfromback</a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/LJS0000">@LJS0000</a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/M-JiYeon">@M-JiYeon</a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/KimYeongJo">@KimYeongJo</a>
+            </td>
+        </tr>
         <tr>
-            <td align="center">프로젝트리더, User App 구현, 발표 준비</td>
-            <td align="center">게시글 검색기능 구현, FrontEnd, 예외처리 및 리팩토링</td>
-            <td align="center">댓글 및 대댓글 기능구현, README 작성, API명세 작성</td>
-            <td align="center">게시글 기능 구현, 파일 업로드 기능 구현, 발표자료 준비</td>
+            <td align="center">프로젝트리더<br>User App 구현<br>발표 준비</td>
+            <td align="center">게시글 검색 기능 구현<br>FrontEnd<br>예외처리 및 리팩토링</td>
+            <td align="center">댓글 및 대댓글 기능 구현<br>README 작성<br>API명세 작성</td>
+            <td align="center">게시글 기능 구현<br>파일 업로드 기능 구현<br>발표자료 준비</td>
         </tr>
     </tbody>
 </table>
