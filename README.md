@@ -57,9 +57,31 @@
 <br>
 
 ## 3. 역할 분담 및 팀원 소개
-|김영조|맹지연|이동섭|이지수|
-|:---:|:---:|:---:|:---:|
-|||||
+<table>
+    <colgroup>
+        <col style="width: 150px;">
+        <col style="width: 150px;">
+        <col style="width: 150px;">
+        <col style="width: 150px;">
+        <col style="width: 150px;">
+    </colgroup>
+    <thead align="center">
+        <tr>
+            <th>이동섭</th>
+            <th>맹지연</th>
+            <th>이지수</th>
+            <th>김영조</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td align="center">프로젝트리더, User App 구현, 발표 준비</td>
+            <td align="center">게시글 검색기능 구현, FrontEnd, 예외처리 및 리팩토링</td>
+            <td align="center">댓글 및 대댓글 기능구현, README 작성, API명세 작성</td>
+            <td align="center">게시글 기능 구현, 파일 업로드 기능 구현, 발표자료 준비</td>
+        </tr>
+    </tbody>
+</table>
 
 
 
