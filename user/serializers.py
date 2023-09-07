@@ -115,7 +115,6 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
             image_data = None
 
         if image_data is not None:
-            print("성공")
             s = S3Storage()
             image = User.objects.get(email=instance.email)
             if image.image_url:
