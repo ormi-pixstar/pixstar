@@ -21,6 +21,7 @@ import jwt
 from rest_framework_simplejwt.tokens import AccessToken
 from myapp.settings import SECRET_KEY
 from .storage import S3Storage
+from rest_framework import exceptions
 
 User = get_user_model()
 
@@ -86,6 +87,8 @@ class PostList(APIView):
 
 class PostWrite(APIView):
     def post(self, request):
+        if not request.FILES:
+            return Response({'error': '사진이 없습니다.'})
         serializer = PostSerializer(context={"request": request}, data=request.data)
         if serializer.is_valid():
             prefer = AccessToken(request.COOKIES["access"])['user_id']
@@ -98,9 +101,12 @@ class PostWrite(APIView):
 
 class PostDetail(APIView):
     def get(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        serializer = PostDetailSerializer(post)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            post = get_object_or_404(Post, pk=pk)
+            serializer = PostDetailSerializer(post)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({'error': '해당 게시글은 존재하지 않습니다'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class PostEdit(APIView):
@@ -117,13 +123,16 @@ class PostEdit(APIView):
 
 class PostDelete(APIView):
     def delete(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        images = Image.objects.filter(post=post)
-        s = S3Storage()
-        for image in images:
-            s.delete(image)
-        post.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            post = get_object_or_404(Post, pk=pk)
+            images = Image.objects.filter(post=post)
+            s = S3Storage()
+            for image in images:
+                s.delete(image)
+            post.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({'error': '해당 게시글은 존재하지 않습니다'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class PostLike(APIView):

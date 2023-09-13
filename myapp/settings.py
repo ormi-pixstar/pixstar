@@ -36,16 +36,16 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    # 'ormi-pixstar.github.io',
-    'pixstar.vercel.app'
+    'ormi-pixstar.github.io',
+    # 'pixstar.vercel.app'
 ]
 
 # CORS
 CORS_ORIGIN_WHITELIST = [
-    'https://127.0.0.1:3000',
-    'https://localhost:3000',
-    # 'https://ormi-pixstar.github.io',
-    'https://pixstar.vercel.app'
+    'http://127.0.0.1:3000',
+    'http://localhost:3000',
+    'http://ormi-pixstar.github.io',
+    # 'https://pixstar.vercel.app'
 ]
 CORS_ALLOW_CREDENTIALS = True
 

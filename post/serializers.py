@@ -59,6 +59,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ["image_urls", "content"]
     
+    
     def create(self, validated_data):
         post = Post.objects.create(**validated_data)
         images_data = self.context['request'].FILES
