@@ -87,52 +87,77 @@ class PostList(APIView):
 
 class PostWrite(APIView):
     def post(self, request):
-        if not request.FILES:
-            return Response({'error': '사진이 없습니다.'})
-        serializer = PostSerializer(context={"request": request}, data=request.data)
-        if serializer.is_valid():
+        try:
             prefer = AccessToken(request.COOKIES["access"])['user_id']
             user = User.objects.get(id=prefer)
-            post = serializer.save(writer=user)
-            post.save()
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not request.FILES:
+                return Response({'error': '사진은 필수입니다.'})
+            serializer = PostSerializer(context={"request": request}, data=request.data)
+            if serializer.is_valid():
+                prefer = AccessToken(request.COOKIES["access"])['user_id']
+                user = User.objects.get(id=prefer)
+                post = serializer.save(writer=user)
+                post.save()
+                return Response(status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': '로그인 해주세요'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class PostDetail(APIView):
     def get(self, request, pk):
         try:
-            post = get_object_or_404(Post, pk=pk)
+            post = Post.objects.get(pk=pk)
             serializer = PostDetailSerializer(post)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except:
+        except Post.DoesNotExist:
             return Response({'error': '해당 게시글은 존재하지 않습니다'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class PostEdit(APIView):
     def put(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(
-            post, context={"request": request}, data=request.data
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            post = Post.objects.get(pk=pk)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
+
+            if user == request.user:
+                serializer = PostSerializer(
+                    post, context={"request": request}, data=request.data
+                )
+                image = Image.objects.get(pk=pk)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': '수정 권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        except Post.DoesNotExist:
+            return Response({'error': '해당 게시글은 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        except Image.DoesNotExist:
+            return Response({'error': '사진은 필수입니다.'}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response({'error': '로그인 해주세요'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class PostDelete(APIView):
     def delete(self, request, pk):
         try:
-            post = get_object_or_404(Post, pk=pk)
-            images = Image.objects.filter(post=post)
-            s = S3Storage()
-            for image in images:
-                s.delete(image)
-            post.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except:
+            post = Post.objects.get(pk=pk)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
+
+            if user == post.writer:
+                images = Image.objects.filter(post=post)
+                s = S3Storage()
+                for image in images:
+                    s.delete(image)
+                post.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({'error': '삭제 권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        except Post.DoesNotExist:
             return Response({'error': '해당 게시글은 존재하지 않습니다'}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response({'error': '로그인 해주세요'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class PostLike(APIView):
@@ -142,14 +167,18 @@ class PostLike(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        prefer = AccessToken(request.COOKIES["access"])['user_id']
-        user = User.objects.get(id=prefer)
-        if user in post.like.all():
-            post.like.remove(user)
-            return Response("unlike", status=status.HTTP_200_OK)
-        post.like.add(user)
-        return Response("like", status=status.HTTP_200_OK)
+        try:
+            post = get_object_or_404(Post, pk=pk)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
+            if user in post.like.all():
+                post.like.remove(user)
+                return Response("unlike", status=status.HTTP_200_OK)
+            post.like.add(user)
+            return Response("like", status=status.HTTP_200_OK)
+        except:
+            return Response({'error': '로그인 해주세요'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 # comment 조회, 작성
 class CommentView(APIView):
