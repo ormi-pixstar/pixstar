@@ -22,11 +22,15 @@ from rest_framework_simplejwt.tokens import AccessToken
 from myapp.settings import SECRET_KEY
 from .storage import S3Storage
 from rest_framework import exceptions
+from drf_standardized_errors.handler import exception_handler
 
 User = get_user_model()
 
 # 환경변수 로드
 load_dotenv()
+
+def get_exception_handler(self):
+        return exception_handler
 
 
 class Pagination(PageNumberPagination):
@@ -91,17 +95,16 @@ class PostWrite(APIView):
             prefer = AccessToken(request.COOKIES["access"])['user_id']
             user = User.objects.get(id=prefer)
             if not request.FILES:
-                return Response({'error': '사진은 필수입니다.'})
+                raise ValueError
             serializer = PostSerializer(context={"request": request}, data=request.data)
             if serializer.is_valid():
-                prefer = AccessToken(request.COOKIES["access"])['user_id']
-                user = User.objects.get(id=prefer)
                 post = serializer.save(writer=user)
                 post.save()
                 return Response(status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            raise exceptions.ValidationError(detail='사진은 필수입니다.', code=400)
         except:
-            return Response({'error': '로그인 해주세요'}, status=status.HTTP_401_UNAUTHORIZED)
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요.', code=401)
 
 
 class PostDetail(APIView):
@@ -111,7 +114,7 @@ class PostDetail(APIView):
             serializer = PostDetailSerializer(post)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Post.DoesNotExist:
-            return Response({'error': '해당 게시글은 존재하지 않습니다'}, status=status.HTTP_404_NOT_FOUND)
+            raise exceptions.NotFound(detail='해당 게시글은 존재하지 않습니다', code=404)
 
 
 class PostEdit(APIView):
@@ -129,14 +132,15 @@ class PostEdit(APIView):
                 if serializer.is_valid():
                     serializer.save()
                     return Response(status=status.HTTP_201_CREATED)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            return Response({'error': '수정 권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+            raise PermissionError
         except Post.DoesNotExist:
-            return Response({'error': '해당 게시글은 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+            raise exceptions.NotFound(detail='해당 게시글은 존재하지 않습니다.', code=404)
         except Image.DoesNotExist:
-            return Response({'error': '사진은 필수입니다.'}, status=status.HTTP_404_NOT_FOUND)
+            raise exceptions.NotFound(detail='사진은 필수입니다.', code=404)
+        except PermissionError:
+            raise exceptions.AuthenticationFailed(detail='수정 권한이 없습니다.', code=403)
         except:
-            return Response({'error': '로그인 해주세요'}, status=status.HTTP_401_UNAUTHORIZED)
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
 
 class PostDelete(APIView):
@@ -153,11 +157,13 @@ class PostDelete(APIView):
                     s.delete(image)
                 post.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response({'error': '삭제 권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+            raise PermissionError
         except Post.DoesNotExist:
-            return Response({'error': '해당 게시글은 존재하지 않습니다'}, status=status.HTTP_404_NOT_FOUND)
+            raise exceptions.NotFound(detail='해당 게시글은 존재하지 않습니다.', code=404)
+        except PermissionError:
+            raise exceptions.AuthenticationFailed(detail='수정 권한이 없습니다.', code=403)
         except:
-            return Response({'error': '로그인 해주세요'}, status=status.HTTP_401_UNAUTHORIZED)
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
 
 class PostLike(APIView):
@@ -177,7 +183,7 @@ class PostLike(APIView):
             post.like.add(user)
             return Response("like", status=status.HTTP_200_OK)
         except:
-            return Response({'error': '로그인 해주세요'}, status=status.HTTP_401_UNAUTHORIZED)
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
 
 # comment 조회, 작성

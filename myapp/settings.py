@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     # CustomApp
     'user',
     'post',
+    'drf_standardized_errors'
 ]
 
 MIDDLEWARE = [
@@ -180,6 +181,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler"
 }
 
 SPECTACURAL_SETTINGS = {
