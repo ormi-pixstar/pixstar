@@ -37,6 +37,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     'ormi-pixstar.github.io',
+    'pixstar.site',
 ]
 
 # CORS
@@ -44,6 +45,7 @@ CORS_ORIGIN_WHITELIST = [
     'https://127.0.0.1:3000',
     'https://localhost:3000',
     'https://ormi-pixstar.github.io',
+    'https://pixstar.site',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
