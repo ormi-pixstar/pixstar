@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -64,9 +65,12 @@ INSTALLED_APPS = [
     'storages',
     'corsheaders',
     'sslserver',
+    'channels',
+    'drf_standardized_errors'
     # CustomApp
     'user',
     'post',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -98,6 +102,18 @@ TEMPLATES = [
         },
     },
 ]
+
+# Channels
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+ASGI_APPLICATION = 'chat.routing.application'
 
 WSGI_APPLICATION = 'myapp.wsgi.application'
 

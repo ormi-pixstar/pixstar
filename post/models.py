@@ -5,7 +5,7 @@ User = get_user_model()
 
 
 class Post(models.Model):
-    content = models.TextField(max_length=140)
+    content = models.TextField(null=True, blank=True, max_length=140)
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
     like = models.ManyToManyField(User, related_name='like_post', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
