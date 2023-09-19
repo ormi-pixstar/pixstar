@@ -1,8 +1,11 @@
 from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
+from drf_standardized_errors.handler import exception_handler
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework import exceptions
+from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 import boto3
 import os
@@ -145,78 +148,102 @@ class PostLike(APIView):
 
 # comment 조회, 작성
 class CommentView(APIView):
+    def get_exception_handler(self):
+        return exception_handler
+    
     # comment 조회
     def get(self, request, post_id):
-        post = Post.objects.get(id=post_id)
-        comments = Comment.objects.filter(parent=None, post_id=post_id)
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            post = Post.objects.get(id=post_id)
+            comments = Comment.objects.filter(parent=None, post_id=post_id)
+            serializer = CommentSerializer(comments, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK) 
+        except Post.DoesNotExist:
+            raise exceptions.NotFound(detail='게시글을 찾을 수 없습니다.', code=404)
 
     # comment 작성
     def post(self, request, post_id):
-        # request.data는 사용자의 입력 데이터
-        serializer = CommentSerializer(data=request.data)
+        try:
+            # request.data는 사용자의 입력 데이터
+            serializer = CommentSerializer(data=request.data)
 
-        prefer = AccessToken(request.COOKIES["access"])['user_id']
-        user = User.objects.get(id=prefer)
-
-        if serializer.is_valid():  # 유효성 검사
-            # comment = serializer.save(writer=request.user, post_id=post_id)
-            comments = serializer.save(writer=user, post_id=post_id)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
+            
+            if serializer.is_valid(raise_exception=True):  # 유효성 검사
+                comments = serializer.save(writer=user, post_id=post_id)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            raise exceptions.ValidationError(serializer.errors, code=400)
+        except Post.DoesNotExist:
+            raise exceptions.NotFound(detail='게시글을 찾을 수 없습니다.', code=404)
+        except:
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
 
 # recomment 작성 및 comemnt의 수정, 삭제
 class CommentDetailView(APIView):
+    def get_exception_handler(self):
+        return exception_handler
+    
     # recomment 작성
     def post(self, request, post_id, comment_id):
-        # request.data는 사용자의 입력 데이터
-        serializer = CommentSerializer(data=request.data)
+        try:
+            # request.data는 사용자의 입력 데이터
+            serializer = CommentSerializer(data=request.data)
 
-        prefer = AccessToken(request.COOKIES["access"])['user_id']
-        user = User.objects.get(id=prefer)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
 
-        post = Post.objects.get(pk=post_id)
+            post = Post.objects.get(pk=post_id)
 
-        comment = Comment.objects.get(pk=comment_id)
-        if serializer.is_valid():  # 유효성 검사
-            # serializer.validated_data["writer"] = request.user
-            serializer.validated_data["writer"] = user
-            serializer.validated_data["parent"] = comment
-            serializer.validated_data["post"] = post
-            serializer.save()  # 저장
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            comment = Comment.objects.get(pk=comment_id)
+            if serializer.is_valid():  # 유효성 검사
+                serializer.validated_data["writer"] = user
+                serializer.validated_data["parent"] = comment
+                serializer.validated_data["post"] = post
+                serializer.save()  # 저장
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            raise exceptions.ValidationError(serializer.errors, code=400)
+        except Comment.DoesNotExist:
+            raise exceptions.NotFound(detail='댓글을 찾을 수 없습니다.', code=404)
+        except:
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
     # comment 수정
     def put(self, request, post_id, comment_id, format=None):
-        comment = Comment.objects.get(post_id=post_id, id=comment_id)
+        try:
+            comment = Comment.objects.get(post_id=post_id, id=comment_id)
+            
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
 
-        prefer = AccessToken(request.COOKIES["access"])['user_id']
-        user = User.objects.get(id=prefer)
-
-        # if request.user == comment.writer:
-        if user == comment.writer:
-            serializer = CommentSerializer(comment, data=request.data)
-            if serializer.is_valid():
-                serializer.save()  # post에 user 정보 있기 때문에 (user=request.user) 생략
-                return Response(serializer.data, status=status.HTTP_200_OK)
+            if user == comment.writer:
+                serializer = CommentSerializer(comment, data=request.data)
+                if serializer.is_valid():
+                    serializer.save()  # post에 user 정보 있기 때문에 (user=request.user) 생략
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                raise exceptions.ValidationError(serializer.errors, code=400)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
+                raise exceptions.AuthenticationFailed(detail='댓글 수정 권한이 없습니다.', code=403)
+        except Comment.DoesNotExist:
+            raise exceptions.NotFound(detail='댓글을 찾을 수 없습니다.', code=404)
+        except:
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
     # comment 삭제
     def delete(self, request, post_id, comment_id):
-        comment = Comment.objects.get(post_id=post_id, id=comment_id)
+        try:
+            comment = Comment.objects.get(post_id=post_id, id=comment_id)
 
-        prefer = AccessToken(request.COOKIES["access"])['user_id']
-        user = User.objects.get(id=prefer)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
 
-        # if request.user == comment.writer:
-        if user == comment.writer:
-            comment.delete()
-            return Response("삭제되었습니다.", status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
+            if user == comment.writer:
+                comment.delete()
+                return Response("삭제되었습니다.", status=status.HTTP_204_NO_CONTENT)
+            else:
+                raise exceptions.AuthenticationFailed(detail='댓글 삭제 권한이 없습니다.', code=403)
+        except Comment.DoesNotExist:
+            raise exceptions.NotFound(detail='댓글을 찾을 수 없습니다.', code=404)
+        except:
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)

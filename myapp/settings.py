@@ -36,14 +36,14 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    'ormi-pixstar.github.io',
+    'pixstar.vercel.app',
 ]
 
 # CORS
 CORS_ORIGIN_WHITELIST = [
     'https://127.0.0.1:3000',
     'https://localhost:3000',
-    'https://ormi-pixstar.github.io',
+    'https://pixstar.vercel.app',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     # Installed package
     'rest_framework',
     'drf_spectacular',
+    'drf_standardized_errors',
     'rest_framework_simplejwt',
     'storages',
     'corsheaders',
@@ -178,6 +179,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # drf-standardized-errors
+    'EXCEPTION_HANDLER': 'drf_standardized_errors.handler.exception_handler',
 }
 
 SPECTACURAL_SETTINGS = {
