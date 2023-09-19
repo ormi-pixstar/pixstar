@@ -68,6 +68,7 @@ class LogoutView(APIView):
         return res
 
 
+
 # 회원탈퇴
 class SignoutView(APIView):
     authentication_classes = (CookieJWTAuthentication,)

@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -36,16 +37,14 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    'ormi-pixstar.github.io',
-    # 'pixstar.vercel.app'
+    'pixstar.vercel.app',
 ]
 
 # CORS
 CORS_ORIGIN_WHITELIST = [
-    'http://127.0.0.1:3000',
-    'http://localhost:3000',
-    'http://ormi-pixstar.github.io',
-    # 'https://pixstar.vercel.app'
+    'https://127.0.0.1:3000',
+    'https://localhost:3000',
+    'https://pixstar.vercel.app',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -65,10 +64,12 @@ INSTALLED_APPS = [
     'storages',
     'corsheaders',
     'sslserver',
+    'channels',
+    'drf_standardized_errors'
     # CustomApp
     'user',
     'post',
-    'drf_standardized_errors'
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -100,6 +101,18 @@ TEMPLATES = [
         },
     },
 ]
+
+# Channels
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+ASGI_APPLICATION = 'chat.routing.application'
 
 WSGI_APPLICATION = 'myapp.wsgi.application'
 

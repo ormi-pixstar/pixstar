@@ -20,7 +20,7 @@ class PostLikeSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    writer = serializers.ReadOnlyField(source="user.writer")
+    writer = UserSerializer(read_only=True)
     post_id = serializers.ReadOnlyField(source="post.pk")
     reply = serializers.SerializerMethodField()
 

@@ -45,6 +45,7 @@ class SignupSerializer(serializers.ModelSerializer):
         return user
 
 
+
 # 로그인
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
