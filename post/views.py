@@ -85,6 +85,40 @@ class PostList(APIView):
 
 
 class PostWrite(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+
+    def post(self, request):
+        serializer = PostSerializer(data=request.data, context={"request": request})
+        user = request.user
+
+        # 토큰 확인
+        if not user.is_authenticated:
+            return Response(
+                {'detail': 'User is not authenticated.'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if serializer.is_valid():
+            # 포스트 저장
+            post = serializer.save(writer=request.user)
+
+            # 이미지 저장
+            images = request.FILES.getlist('images')
+            if not 1 <= len(images) <= 10:
+                return Response(
+                    {'detail': 'You must upload between 1 to 10 images.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            image_urls = upload_images_to_s3(images)
+
+            for url in image_urls:
+                Image.objects.create(post=post, image_url=url)
+
+            return Response(
+                {'message': 'Successfully created post'}, status=status.HTTP_201_CREATED
+            )
+
     def post(self, request):
         serializer = PostSerializer(context={"request": request}, data=request.data)
         if serializer.is_valid():
