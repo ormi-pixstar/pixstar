@@ -44,3 +44,7 @@ class S3Storage():
     def image_delete(self, imageName):
         name = str(imageName.image_url).split('/')[-1]
         self.s3_resource.Object(self.bucket, name).delete()
+
+    def edit_delete(self, imageName):
+        name = imageName.split('/')[-1]
+        self.s3_resource.Object(self.bucket, name).delete()

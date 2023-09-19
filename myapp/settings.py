@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'sslserver',
     'channels',
+    'drf_standardized_errors'
     # CustomApp
     'user',
     'post',
@@ -193,6 +194,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler"
 }
 
 SPECTACURAL_SETTINGS = {

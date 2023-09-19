@@ -10,9 +10,9 @@ from drf_spectacular.utils import extend_schema
 from .models import Post, Image, Comment
 from .serializers import (
     PostSerializer,
-    ImageSerializer,
     PostLikeSerializer,
     CommentSerializer,
+    PostDetailSerializer
 )
 from django.db.models import Count
 from dotenv import load_dotenv
@@ -21,11 +21,16 @@ import jwt
 from rest_framework_simplejwt.tokens import AccessToken
 from myapp.settings import SECRET_KEY
 from .storage import S3Storage
+from rest_framework import exceptions
+from drf_standardized_errors.handler import exception_handler
 
 User = get_user_model()
 
 # 환경변수 로드
 load_dotenv()
+
+def get_exception_handler(self):
+        return exception_handler
 
 
 class Pagination(PageNumberPagination):
@@ -72,7 +77,7 @@ class PostList(APIView):
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request)
 
-        serializer = PostSerializer(page, many=True)
+        serializer = PostDetailSerializer(page, many=True)
 
         response_data = {
             'results': serializer.data,
@@ -120,44 +125,79 @@ class PostWrite(APIView):
             )
 
     def post(self, request):
-        serializer = PostSerializer(context={"request": request}, data=request.data)
-        if serializer.is_valid():
+        try:
             prefer = AccessToken(request.COOKIES["access"])['user_id']
             user = User.objects.get(id=prefer)
-            post = serializer.save(writer=user)
-            post.save()
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not request.FILES:
+                raise ValueError
+            serializer = PostSerializer(context={"request": request}, data=request.data)
+            if serializer.is_valid():
+                post = serializer.save(writer=user)
+                post.save()
+                return Response(status=status.HTTP_201_CREATED)
+        except ValueError:
+            raise exceptions.ValidationError(detail='사진은 필수입니다.', code=400)
+        except:
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요.', code=401)
 
 
 class PostDetail(APIView):
     def get(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(post)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            post = Post.objects.get(pk=pk)
+            serializer = PostDetailSerializer(post)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Post.DoesNotExist:
+            raise exceptions.NotFound(detail='해당 게시글은 존재하지 않습니다', code=404)
 
 
 class PostEdit(APIView):
     def put(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        serializer = PostSerializer(
-            post, context={"request": request}, data=request.data
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            post = Post.objects.get(pk=pk)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
+
+            if user == request.user:
+                serializer = PostSerializer(
+                    post, context={"request": request}, data=request.data
+                )
+                image = Image.objects.get(pk=pk)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(status=status.HTTP_201_CREATED)
+            raise PermissionError
+        except Post.DoesNotExist:
+            raise exceptions.NotFound(detail='해당 게시글은 존재하지 않습니다.', code=404)
+        except Image.DoesNotExist:
+            raise exceptions.NotFound(detail='사진은 필수입니다.', code=404)
+        except PermissionError:
+            raise exceptions.AuthenticationFailed(detail='수정 권한이 없습니다.', code=403)
+        except:
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
 
 class PostDelete(APIView):
     def delete(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        images = Image.objects.filter(post=post)
-        s = S3Storage()
-        for image in images:
-            s.delete(image)
-        post.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            post = Post.objects.get(pk=pk)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
+
+            if user == post.writer:
+                images = Image.objects.filter(post=post)
+                s = S3Storage()
+                for image in images:
+                    s.delete(image)
+                post.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            raise PermissionError
+        except Post.DoesNotExist:
+            raise exceptions.NotFound(detail='해당 게시글은 존재하지 않습니다.', code=404)
+        except PermissionError:
+            raise exceptions.AuthenticationFailed(detail='수정 권한이 없습니다.', code=403)
+        except:
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
 
 class PostLike(APIView):
@@ -167,14 +207,17 @@ class PostLike(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
-        prefer = AccessToken(request.COOKIES["access"])['user_id']
-        user = User.objects.get(id=prefer)
-        if user in post.like.all():
-            post.like.remove(user)
-            return Response("unlike", status=status.HTTP_200_OK)
-        post.like.add(user)
-        return Response("like", status=status.HTTP_200_OK)
+        try:
+            post = get_object_or_404(Post, pk=pk)
+            prefer = AccessToken(request.COOKIES["access"])['user_id']
+            user = User.objects.get(id=prefer)
+            if user in post.like.all():
+                post.like.remove(user)
+                return Response("unlike", status=status.HTTP_200_OK)
+            post.like.add(user)
+            return Response("like", status=status.HTTP_200_OK)
+        except:
+            raise exceptions.AuthenticationFailed(detail='로그인 해주세요', code=401)
 
 
 # comment 조회, 작성

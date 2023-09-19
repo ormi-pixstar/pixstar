@@ -118,7 +118,8 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         if image_data is not None:
             s = S3Storage()
             image = User.objects.get(email=instance.email)
-            s.image_delete(image)
+            if image.image_url:
+                s.image_delete(image)
             for data in image_data.getlist('image_url'):
                 s.upload(instance.email, data)
                 instance.image_url = s.getUrl()
