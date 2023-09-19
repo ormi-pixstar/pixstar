@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     # Installed package
     'rest_framework',
     'drf_spectacular',
+    'drf_standardized_errors',
     'rest_framework_simplejwt',
     'storages',
     'corsheaders',
@@ -194,7 +195,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler"
+    # drf-standardized-errors
+    'EXCEPTION_HANDLER': 'drf_standardized_errors.handler.exception_handler',
 }
 
 SPECTACURAL_SETTINGS = {
