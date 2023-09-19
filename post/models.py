@@ -5,60 +5,25 @@ User = get_user_model()
 
 
 class Post(models.Model):
-    content = models.TextField()
+    content = models.TextField(max_length=140)
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
+    like = models.ManyToManyField(User, related_name='like_post', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.content[:20]
-
-    class Meta:
-        ordering = ['-created_at']
 
 
 class Image(models.Model):
-    post = models.ForeignKey('Post', related_name='images', on_delete=models.CASCADE)
-    image_url = models.URLField(max_length=500, null=False, blank=False)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.image_url
-
-
-class Like(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    post = models.ForeignKey('Post', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f'{self.user.email} liked {self.post.content[:20]}'
-
-    # 유저와 포스트의 유일성을 강제 -> 에러 처리 필요
-    class Meta:
-        unique_together = ('user', 'post')
+    post = models.ForeignKey('Post', related_name='image_urls', on_delete=models.CASCADE)
+    image_url = models.CharField(null=False, blank=False)
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(
-        'Post',
-        related_name='comments',
-        on_delete=models.CASCADE,
-    )
+    post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='comments')
     writer = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
+    parent = models.ForeignKey('self', related_name='reply', on_delete=models.CASCADE, null=True, blank=True)
+    comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    parent = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name='replies',
-    )
 
     def __str__(self):
-        return self.content[:20]
-
-    class Meta:
-        ordering = ['-created_at']
+        return self.comment

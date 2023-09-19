@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # 환경변수 로드
 load_dotenv()
@@ -36,14 +37,14 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    'ormi-pixstar.github.io',
+    'pixstar.vercel.app',
 ]
 
 # CORS
 CORS_ORIGIN_WHITELIST = [
-    'http://127.0.0.1:3000',
-    'http://localhost:3000',
-    'https://ormi-pixstar.github.io',
+    'https://127.0.0.1:3000',
+    'https://localhost:3000',
+    'https://pixstar.vercel.app',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -179,7 +180,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     # simplejwt JWTAuthentication을 사용
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     # API 접근 권한 설정
     'DEFAULT_PERMISSION_CLASSES': (
@@ -189,6 +190,9 @@ REST_FRAMEWORK = {
     ),
     # Spectacular를 사용
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
 SPECTACURAL_SETTINGS = {

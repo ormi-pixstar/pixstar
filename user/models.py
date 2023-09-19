@@ -12,21 +12,20 @@ from django.utils import timezone
 class UserManager(BaseUserManager):
     def _create_user(self, email, password, is_staff, is_superuser, **extra_fields):
         if not email:
-            return Response(
-                {'detail': 'Email is required'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return ValueError('Email is required.')
         now = timezone.localtime()
         email = self.normalize_email(email)
+        username = email.split('@')[0]
         user = self.model(
             email=email,
+            username=username,
             is_staff=is_staff,
             is_superuser=is_superuser,
             date_joined=now,
             **extra_fields
         )
         user.set_password(password)
-        user.save(using=self.db)
+        user.save(using=self._db)
         return user
 
     def create_user(self, email, password, **extra_fields):
@@ -38,7 +37,8 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, max_length=155)
-    profile_img = models.ImageField(null=True, blank=True)
+    username = models.CharField(max_length=255, null=False, blank=False)
+    image_url = models.ImageField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -51,5 +51,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = []
 
+    # 이메일에서 username을 추출
+    def save(self, *args, **kwargs):
+        if not self.username:
+            self.username = self.email.split('@')[0]
+        super(User, self).save(*args, **kwargs)
+        
     def __str__(self):
         return self.email
