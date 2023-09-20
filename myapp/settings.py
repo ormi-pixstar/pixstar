@@ -66,7 +66,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'sslserver',
     'channels',
-    'drf_standardized_errors'
     # CustomApp
     'user',
     'post',
