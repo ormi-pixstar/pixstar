@@ -16,16 +16,16 @@ urlpatterns = [
     path("detail/<int:pk>/delete/", views.PostDelete.as_view(), name='post-delete'),
     # 게시글 좋아요
     path("detail/<int:pk>/like/", views.PostLike.as_view(), name='post-like'),
-    # 댓글 조회, 작성
-    path(
-        'detail/<int:post_id>/comment/',
-        views.CommentView.as_view(),
-        name='comment',
-    ),
-    # 대댓글 작성 및 댓글 수정, 삭제
-    path(
-        'detail/<int:post_id>/comment/<int:comment_id>',
-        views.CommentDetailView.as_view(),
-        name='',
-    ),
+    # # 댓글 조회, 작성
+    # path(
+    #     'detail/<int:post_id>/comment/',
+    #     views.CommentView.as_view(),
+    #     name='comment',
+    # ),
+    # # 대댓글 작성 및 댓글 수정, 삭제
+    # path(
+    #     'detail/<int:post_id>/comment/<int:comment_id>',
+    #     views.CommentDetailView.as_view(),
+    #     name='',
+    # ),
 ]
